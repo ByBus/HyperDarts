@@ -1,7 +1,11 @@
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import dartsgame.DartsGameApplication;
 import org.hyperskill.hstest.dynamic.DynamicTest;
 import org.hyperskill.hstest.dynamic.input.DynamicTesting;
+import org.hyperskill.hstest.exception.outcomes.UnexpectedError;
+import org.hyperskill.hstest.exception.outcomes.WrongAnswer;
+import org.hyperskill.hstest.mocks.web.request.HttpRequest;
 import org.hyperskill.hstest.mocks.web.response.HttpResponse;
 import org.hyperskill.hstest.stage.SpringTest;
 import org.hyperskill.hstest.testcase.CheckResult;
@@ -9,13 +13,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.jwt.Jwt;
 import org.springframework.security.jwt.JwtHelper;
 import org.springframework.security.jwt.crypto.sign.RsaVerifier;
-
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static org.hyperskill.hstest.common.JsonUtils.getJson;
+import static org.hyperskill.hstest.mocks.web.constants.Headers.AUTHORIZATION;
 import static org.hyperskill.hstest.testing.expect.Expectation.expect;
-import static org.hyperskill.hstest.testing.expect.json.JsonChecker.isInteger;
-import static org.hyperskill.hstest.testing.expect.json.JsonChecker.isObject;
+import static org.hyperskill.hstest.testing.expect.json.JsonChecker.*;
 
 class TestHint {
   private final String apiPath;
@@ -40,60 +45,241 @@ class TestHint {
 
 public class DartsGameTest extends SpringTest {
 
+  private final String apiCreate = "/api/game/create";
+  private final String apiList = "/api/game/list";
+  private final String apiJoin = "/api/game/join";
+  private final String apiStatus = "/api/game/status";
+  private final String apiThrows = "/api/game/throws";
   private final String tokenApi = "/oauth/token";
+
+  private final List<Integer> gameIds = new ArrayList();
 
   private String bearerToken = "";
   private final String clientId = "hyperdarts";
   private final String clientSecret = "secret";
 
-  private final String ivanHoe = "{\n" +
-          "   \"name\": \"Ivan\",\n" +
-          "   \"lastname\": \"Hoe\",\n" +
-          "   \"email\": \"ivanhoe@acme.com\",\n" +
-          "   \"password\": \"oMoa3VvqnLxW\"\n" +
-          "}";
+  private final String ivanHoe = """
+      {
+         "name": "Ivan",
+         "lastname": "Hoe",
+         "email": "ivanhoe@acme.com",
+         "password": "oMoa3VvqnLxW"
+      }""";
 
-  private final String admin = "{\n" +
-          "   \"name\": \"admin\",\n" +
-          "   \"lastname\": \"admin\",\n" +
-          "   \"email\": \"admin@acme.com\",\n" +
-          "   \"password\": \"zy0y3bMvyA6T\"\n" +
-          "}";
+  private final String robinHood = """
+      {
+         "name": "Robin",
+         "lastname": "Hood",
+         "email": "robinhood@acme.com",
+         "password": "ai0y9bMvyF6G"
+      }""";
 
-  private final String robinHood = "{\n" +
-          "   \"name\": \"Robin\",\n" +
-          "   \"lastname\": \"Hood\",\n" +
-          "   \"email\": \"robinhood@acme.com\",\n" +
-          "   \"password\": \"ai0y9bMvyF6G\"\n" +
-          "}";
+    private final String wilhelmTell = """
+        {
+           "name": "Robin",
+           "lastname": "Hood",
+           "email": "wilhelmtell@acme.com",
+           "password": "bv0y9bMvyF7E"
+        }""";
 
-  private final String wilhelmTell = "{\n" +
-          "   \"name\": \"Wilhelm\",\n" +
-          "   \"lastname\": \"Tell\",\n" +
-          "   \"email\": \"wilhelmtell@acme.com\",\n" +
-          "   \"password\": \"bv0y9bMvyF7E\"\n" +
-          "}";
+  private final String wrongUser = """
+      {
+         "name": "Bobin",
+         "lastname": "Hood",
+         "email": "bobinhood@acme.com",
+         "password": "be0y9bMvyF6G"
+      }""";
 
-  private final String wrongUser = "{\n" +
-          "   \"name\": \"Bobin\",\n" +
-          "   \"lastname\": \"Hood\",\n" +
-          "   \"email\": \"bobinhood@acme.com\",\n" +
-          "   \"password\": \"be0y9bMvyF6G\"\n" +
-          "}";
+  private final String jwtSigningKey = """
+      -----BEGIN PUBLIC KEY-----
+      MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDQ+7yKlJGuvYtf1soMsJjkQJGA
+      Xe90QAxqppycf+3JT5ehnvvWtwS8ef+UsqrNa5Rc9tyyHjP7ZXRN145SlRTZzc0d
+      03Ez10OfAEVdhGACgRxS5s+GZVtdJuVcje3Luq3VIvZ8mV/P4eRcV3yVKDwQEenM
+      uL6Mh6JLH48KxgbNRQIDAQAB
+      -----END PUBLIC KEY-----""";
 
+  // for create API
+  private final String wrongScore = """
+      {
+         "targetScore": 601
+      }""";
+  private final String wrongScoreAnswer = """
+      {
+         "result": "Wrong target score!"
+      }""";
+  private final String correctScore = """
+      {
+         "targetScore": 501
+      }""";
+    private final String correctScore101 = """
+        {
+           "targetScore": 101
+        }""";
+  private final String gameExistAnswer = """
+      {
+         "result": "You have an unfinished game!"
+      }""";
+  private final String answerWT = """
+      {
+         "playerOne": "wilhelmtell@acme.com",
+         "playerTwo": "",
+         "gameStatus": "created",
+         "playerOneScores": 101,
+         "playerTwoScores": 101,
+         "turn": "wilhelmtell@acme.com"
+      }""";
+    private final String answerRH = """
+        {
+           "playerOne": "ivanhoe@acme.com",
+           "playerTwo": "",
+           "gameStatus": "created",
+           "playerOneScores": 501,
+           "playerTwoScores": 501,
+           "turn": "ivanhoe@acme.com"
+        }""";
 
-  private final String jwtSigningKey = "-----BEGIN PUBLIC KEY-----\n" +
-          "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDQ+7yKlJGuvYtf1soMsJjkQJGA\n" +
-          "Xe90QAxqppycf+3JT5ehnvvWtwS8ef+UsqrNa5Rc9tyyHjP7ZXRN145SlRTZzc0d\n" +
-          "03Ez10OfAEVdhGACgRxS5s+GZVtdJuVcje3Luq3VIvZ8mV/P4eRcV3yVKDwQEenM\n" +
-          "uL6Mh6JLH48KxgbNRQIDAQAB\n" +
-          "-----END PUBLIC KEY-----";
+  // for status API
+  private final String emptyAnswer = "{}";
+  private final String statusAnswer = """
+      {
+         "playerOne": "ivanhoe@acme.com",
+         "playerTwo": "",
+         "gameStatus": "created",
+         "playerOneScores": 501,
+         "playerTwoScores": 501,
+         "turn": "ivanhoe@acme.com"
+      }""";
+
+  // for list API
+  private final String emptyArray = "[]";
+  private final String listAnswer = """
+      [{
+         "playerOne": "wilhelmtell@acme.com",
+         "playerTwo": "",
+         "gameStatus": "created",
+         "playerOneScores": 101,
+         "playerTwoScores": 101,
+         "turn": "wilhelmtell@acme.com"
+      },
+      {
+         "playerOne": "ivanhoe@acme.com",
+         "playerTwo": "",
+         "gameStatus": "created",
+         "playerOneScores": 501,
+         "playerTwoScores": 501,
+         "turn": "ivanhoe@acme.com"
+      }]"""
+          ;
+
+  private final String listAnswer2 = """
+      [{
+         "playerOne": "wilhelmtell@acme.com",
+         "playerTwo": "",
+         "gameStatus": "created",
+         "playerOneScores": 101,
+         "playerTwoScores": 101,
+         "turn": "wilhelmtell@acme.com"
+      },
+      {
+         "playerOne": "ivanhoe@acme.com",
+         "playerTwo": "robinhood@acme.com",
+         "gameStatus": "started",
+         "playerOneScores": 501,
+         "playerTwoScores": 501,
+         "turn": "ivanhoe@acme.com"
+      }]"""
+          ;
+
+  // for join API
+  private final String gameNotFound = """
+      {
+         "result": "Game not found!"
+      }""";
+
+  private final String unFinishedGame = """
+      {
+         "result": "You have an unfinished game!"
+      }""";
+
+  private final String gameInProgress = """
+      {
+         "result": "You can't join the game!"
+      }""";
+
+  private final String autoGame = """
+      {
+         "result": "You can't play alone!"
+      }""";
+
+  private final String joinAnswerIH = """
+      {
+         "playerOne": "ivanhoe@acme.com",
+         "playerTwo": "robinhood@acme.com",
+         "gameStatus": "started",
+         "playerOneScores": 501,
+         "playerTwoScores": 501,
+         "turn": "ivanhoe@acme.com"
+      }""";
+
 
   public DartsGameTest() {
-    super(DartsGameApplication.class, 28852, "../service_db.mv.db");
+    super(DartsGameApplication.class, "../service_db.mv.db");
   }
 
-  private CheckResult getToken(String user, int status, TestHint hint) {
+  /**
+   * Method for testing api response
+   *
+   * @param token string representation of bearer token (String)
+   * @param body request body (String)
+   * @param status expected response status (int)
+   * @param api testing api (String)
+   * @param method method for api (String)
+   * @return response (HttpResponse)
+   */
+  private HttpResponse checkResponseStatus(String token, String body,
+                                           int status, String api, String method) {
+    get(api);
+    HttpRequest request = switch (method) {
+      case "GET" -> get(api);
+      case "POST" -> post(api, body);
+      case "PUT" -> put(api, body);
+      case "DELETE" -> delete(api);
+      default -> get(api);
+    };
+
+    if (!token.equals("")) {
+      String headerValue = "Bearer " + token;
+      assert request != null;
+      request = request.addHeader(AUTHORIZATION, headerValue);
+    }
+    HttpResponse response = request.send();
+
+    if (response.getStatusCode() != status) {
+      throw new WrongAnswer(method + " " + api  + " should respond with "
+              + "status code " + status + ", responded: " + response.getStatusCode() + "\n"
+              + "Response body:\n" + response.getContent() + "\n");
+    }
+    return response;
+  }
+
+  private CheckResult testApi(String api, String method,
+                              int status, String token, String answer, TestHint hint) {
+
+    System.out.println(hint.toString());
+
+    HttpResponse response = checkResponseStatus(token, "", status, api, method);
+
+    // Check JSON in response
+    if (response.getStatusCode() == 200) {
+      expect(response.getContent()).asJson().check(
+              isObject()
+                      .value("status", answer));
+
+    }
+    return CheckResult.correct();
+  }
+
+  private CheckResult getToken(String user, String scope, int status, TestHint hint) {
 
     System.out.println(hint.toString());
 
@@ -101,7 +287,14 @@ public class DartsGameTest extends SpringTest {
     String password = userJson.get("password").getAsString();
     String login = userJson.get("email").getAsString().toLowerCase();
 
-    Map<String, String> urlParams = Map.of("grant_type", "password", "username", login, "password", password);
+    Map<String, String> urlParams = Map.of("grant_type", "password", "username", login,
+            "password", password, "scope", scope);
+    System.out.println("Request params:\n" +
+            "Client ID: " + clientId + "\n" +
+            "Client password: " + clientSecret + "\n" +
+            "User: " + login + "\n" +
+            "User password: " + password + "\n" +
+            "Scope: " + scope);
 
     HttpResponse response = post("/oauth/token", urlParams)
             .basicAuth(clientId, clientSecret).send();
@@ -111,8 +304,7 @@ public class DartsGameTest extends SpringTest {
       return CheckResult.wrong("POST " + tokenApi + " should respond with "
               + "status code " + status + ", responded: " + response.getStatusCode() + "\n"
               + response.getStatusCode() + "\n"
-              + "Response body:\n" + response.getContent() + "\n"
-              + "Request body:\n" + response.getContent());
+              + "Response body:\n" + response.getContent());
     }
     String r = response.getContent();
 
@@ -124,7 +316,7 @@ public class DartsGameTest extends SpringTest {
     return CheckResult.correct();
   }
 
-  private CheckResult checkToken(String user, TestHint hint) {
+  private CheckResult checkToken(String user, String[] scope, TestHint hint) {
 
     System.out.println(hint.toString());
 
@@ -135,9 +327,12 @@ public class DartsGameTest extends SpringTest {
 
     try {
       decodedToken = JwtHelper.decode(bearerToken);
+      System.out.println("Checking token:\n" +
+              decodedToken);
     } catch (Exception e) {
       return CheckResult.wrong("Wrong token format!");
     }
+
 
     try {
       JwtHelper.decodeAndVerify(bearerToken, new RsaVerifier(jwtSigningKey));
@@ -149,9 +344,9 @@ public class DartsGameTest extends SpringTest {
             isObject()
                     .value("client_id", "hyperdarts")
                     .value("user_name", login)
-                    .value("scope", new String[] {"read", "write", "update"})
+                    .value("scope", scope)
                     .value("exp", isInteger())
-                    .value("authorities", login.equals("admin@acme.com") ? new String[] {"ROLE_ADMIN"} : new String[] {"ROLE_GAMER"})
+                    .value("authorities", new String[] {"ROLE_GAMER"})
                     .anyOtherValues());
 
     return CheckResult.correct();
@@ -176,13 +371,146 @@ public class DartsGameTest extends SpringTest {
       return CheckResult.wrong("POST " + tokenApi + " should respond with "
               + "status code " + status + ", responded: " + response.getStatusCode() + "\n"
               + response.getStatusCode() + "\n"
-              + "Response body:\n" + response.getContent() + "\n"
-              + "Request body:\n" + response.getContent());
+              + "Response body:\n" + response.getContent());
+    }
+    return CheckResult.correct();
+  }
+
+  private CheckResult testCreateApi(String body, int status, String token, String answer,
+                                    TestHint hint) {
+
+    System.out.println(hint.toString());
+
+    HttpResponse response = checkResponseStatus(token, body, status, "/api/game/create", "POST");
+
+    JsonObject answerJson = getJson(answer).getAsJsonObject();
+
+    if (response.getStatusCode() == 200) {
+      expect(response.getContent()).asJson().check(
+              isObject()
+                      .value("gameId", isInteger())
+                      .value("playerOne", answerJson.get("playerOne").getAsString())
+                      .value("playerTwo", answerJson.get("playerTwo").getAsString())
+                      .value("gameStatus", answerJson.get("gameStatus").getAsString())
+                      .value("playerOneScores", answerJson.get("playerOneScores").getAsInt())
+                      .value("playerTwoScores", answerJson.get("playerTwoScores").getAsInt())
+                      .value("turn", answerJson.get("turn").getAsString()));
+
+      gameIds.add(getJson(response.getContent()).getAsJsonObject().get("gameId").getAsInt());
+
+    } else {
+
+      // Check JSON in response
+      expect(response.getContent()).asJson().check(
+              isObject()
+                      .value("result", answerJson.get("result").getAsString()));
+    }
+
+    return CheckResult.correct();
+  }
+
+  private CheckResult testStatusApi(int status, String token, String answer, TestHint hint) {
+
+    System.out.println(hint.toString());
+
+    HttpResponse response = checkResponseStatus(token, "", status, "/api/game/status", "GET");
+
+    JsonObject answerJson = getJson(answer).getAsJsonObject();
+
+    // Check JSON in response
+    if (response.getStatusCode() == 200) {
+      expect(response.getContent()).asJson().check(
+              isObject()
+                      .value("gameId", isInteger())
+                      .value("playerOne", answerJson.get("playerOne").getAsString())
+                      .value("playerTwo", answerJson.get("playerTwo").getAsString())
+                      .value("gameStatus", answerJson.get("gameStatus").getAsString())
+                      .value("playerOneScores", answerJson.get("playerOneScores").getAsInt())
+                      .value("playerTwoScores", answerJson.get("playerTwoScores").getAsInt())
+                      .value("turn", answerJson.get("turn").getAsString()));
+
+    } else {
+      expect(response.getContent()).asJson().check(
+              isObject());
+    }
+    return CheckResult.correct();
+  }
+
+  private CheckResult testJoinApi(int status, String token, String answer, int gameId, TestHint hint) {
+
+    System.out.println(hint.toString());
+
+    HttpResponse response = checkResponseStatus(token, "", status, "/api/game/join" + "/" + gameId, "GET");
+
+    JsonObject answerJson = getJson(answer).getAsJsonObject();
+
+    // Check JSON in response
+    if (response.getStatusCode() == 200) {
+      expect(response.getContent()).asJson().check(
+              isObject()
+                      .value("gameId", gameId)
+                      .value("playerOne", answerJson.get("playerOne").getAsString())
+                      .value("playerTwo", answerJson.get("playerTwo").getAsString())
+                      .value("gameStatus", answerJson.get("gameStatus").getAsString())
+                      .value("playerOneScores", answerJson.get("playerOneScores").getAsInt())
+                      .value("playerTwoScores", answerJson.get("playerTwoScores").getAsInt())
+                      .value("turn", answerJson.get("turn").getAsString()));
+
+    } else {
+      expect(response.getContent()).asJson().check(
+              isObject()
+                      .value("result", answerJson.get("result").getAsString()));
     }
     return CheckResult.correct();
   }
 
 
+  private CheckResult testListApi(int status, String token, String answer, TestHint hint) {
+
+    System.out.println(hint.toString());
+
+    HttpResponse response = checkResponseStatus(token, "", status, "/api/game/list", "GET");
+
+    JsonArray correctJson = getJson(answer).getAsJsonArray();
+    JsonArray responseJson;
+    try {
+      responseJson = getJson(response.getContent()).getAsJsonArray();
+    } catch (Exception e) {
+      throw new WrongAnswer("Must be array of JSON's in answer");
+    }
+
+    // Check JSON in response
+    if (response.getStatusCode() == 200) {
+    for (int i = 0; i < responseJson.size(); i++) {
+        expect(responseJson.get(i).getAsJsonObject().toString()).asJson()
+                .check(isObject()
+                        .value("gameId", isInteger())
+                        .value("playerOne", correctJson.get(i).getAsJsonObject().get("playerOne").getAsString())
+                        .value("playerTwo", correctJson.get(i).getAsJsonObject().get("playerTwo").getAsString())
+                        .value("gameStatus", correctJson.get(i).getAsJsonObject().get("gameStatus").getAsString())
+                        .value("playerOneScores", correctJson.get(i).getAsJsonObject().get("playerOneScores").getAsInt())
+                        .value("playerTwoScores", correctJson.get(i).getAsJsonObject().get("playerTwoScores").getAsInt())
+                        .value("turn", correctJson.get(i).getAsJsonObject().get("turn").getAsString()));
+      }
+    }  else {
+      expect(response.getContent()).asJson().check(
+              isArray());
+    }
+    return CheckResult.correct();
+  }
+
+  /**
+   * Method for restarting application
+   *
+   */
+  private CheckResult restartApplication() {
+    try {
+      reloadSpring();
+    } catch (Exception ex) {
+      throw new UnexpectedError(ex.getMessage());
+    }
+    return CheckResult.correct();
+  }
 
 
   @DynamicTest
@@ -190,32 +518,146 @@ public class DartsGameTest extends SpringTest {
           // Negative tests
           () -> testTokenApi(ivanHoe, clientId, "clientSecret", HttpStatus.UNAUTHORIZED.value(),
                   new TestHint(tokenApi, "",
-                          "Testing token endpoint with wrong client credentials")),
+                          "Testing token endpoint with wrong client credentials")), // 1
           () -> testTokenApi(ivanHoe, "clientId", "clientSecret", HttpStatus.UNAUTHORIZED.value(),
                   new TestHint(tokenApi, "",
-                          "Testing token endpoint with wrong client credentials")),
+                          "Testing token endpoint with wrong client credentials")), // 2
           () -> testTokenApi(wrongUser, clientId, clientSecret, HttpStatus.BAD_REQUEST.value(),
                   new TestHint(tokenApi, "",
-                          "Testing token endpoint with correct client credentials, but wrong user")),
+                          "Testing token endpoint with correct client credentials, but wrong user")), // 3
+          () -> getToken(ivanHoe, "update", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'update'")), // 4
+          () -> checkToken(ivanHoe, new String[] {"update"}, new TestHint(tokenApi, "",
+                  "Checking token 'scope' value, it must be - 'update'")), // 5
+          () -> testApi(apiCreate, "POST", 403, bearerToken, "ivanhoe@acme.com",
+                  new TestHint(apiCreate, "", "The token with the wrong scope (update)" +
+                          " should not be able to access api")), // 6
+          () -> getToken(ivanHoe, "write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'write'")), // 7
+          () -> checkToken(ivanHoe, new String[] {"write"}, new TestHint(tokenApi, "",
+                  "Checking token 'scope' value, it must be - 'write'")), // 8
+          () -> testApi(apiList, "GET", 403, bearerToken, "ivanhoe@acme.com",
+                  new TestHint(apiList, "", "The token with the wrong scope (write)" +
+                          " should not be able to access api with method GET")), // 9
+          () -> getToken(ivanHoe, "read", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read'")), // 10
+          () -> checkToken(ivanHoe, new String[] {"read"}, new TestHint(tokenApi, "",
+                  "Checking token 'scope' value, it must be - 'read'")), // 11
+          () -> testApi(apiCreate, "POST", 403, bearerToken, "ivanhoe@acme.com",
+                  new TestHint(apiCreate, "", "The token with the wrong scope (read)" +
+                          " should not be able to access api with method POST")), // 12
 
-          // Positive tests
-          () -> getToken(ivanHoe, HttpStatus.OK.value(), new TestHint(tokenApi, "",
-                  "Testing token endpoint with correct credentials and correct user")),
-          () -> checkToken(ivanHoe, new TestHint("", "",
-                  "Check token")),
-          () -> getToken(robinHood, HttpStatus.OK.value(), new TestHint(tokenApi, "",
-                  "Testing token endpoint with correct credentials and correct user")),
-          () -> checkToken(robinHood, new TestHint("", "",
-                  "Check token")),
-          () -> getToken(wilhelmTell, HttpStatus.OK.value(), new TestHint(tokenApi, "",
-                  "Testing token endpoint with correct credentials and correct user")),
-          () -> checkToken(wilhelmTell, new TestHint("", "",
-                  "Check token")),
-          () -> getToken(admin, HttpStatus.OK.value(), new TestHint(tokenApi, "",
-                  "Testing token endpoint with correct credentials and correct user")),
-          () -> checkToken(admin, new TestHint("", "",
-                  "Check token"))
+          // Tests for status API
+          () -> testStatusApi(404, bearerToken, emptyAnswer,
+                  new TestHint(apiStatus, "",
+                          "If the user does not participate in the game, then the endpoint must respond" +
+                                  " with HTTP NOT FOUND status 404")), // 13
+
+          // Tests for join API
+          () -> testJoinApi(404, bearerToken, gameNotFound, 1001,
+                  new TestHint(apiJoin + "/" + 1001, "",
+                          "If a game with a specified id is not found, the endpoint must respond" +
+                                  " with HTTP NOT FOUND status 404")), // 14
+
+          // Tests for list API
+          () -> testListApi(404, bearerToken, emptyArray, new TestHint(apiList, "",
+                  "If the server has no current games, the endpoint must respond with the" +
+                          " HTTP NOT FOUND status 404")), // 15
+
+
+          // Tests for create API
+          () -> getToken(ivanHoe, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 16
+          //
+          () -> checkToken(ivanHoe, new String[] {"read", "write"}, new TestHint(tokenApi, "",
+                  "Checking token 'scope' value, it must be - 'read write'")), // 17
+          //
+          () -> testCreateApi(wrongScore, 400, bearerToken, wrongScoreAnswer,
+                  new TestHint(apiCreate, wrongScore,
+                          "If the user specify wrong targetScore, endpoint" +
+                                  " must respond with HTTP BAD REQUEST status 400")), // 18
+          //
+          () -> getToken(ivanHoe, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 19
+          //
+          () -> checkToken(ivanHoe, new String[] {"read", "write"}, new TestHint(tokenApi, "",
+                  "Checking token 'scope' value, it must be - 'read write'")), // 20
+          //
+          () -> testCreateApi(correctScore, 200, bearerToken, answerRH,
+                  new TestHint(apiCreate, correctScore,
+                          "All conditions are met and the game must be created")), // 21
+          //
+          () -> getToken(wilhelmTell, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 22
+          //
+          () -> checkToken(wilhelmTell, new String[] {"read", "write"}, new TestHint(tokenApi, "",
+                  "Checking token 'scope' value, it must be - 'read write'")), // 23
+          //
+          () -> testCreateApi(correctScore101, 200, bearerToken, answerWT,
+                  new TestHint(apiCreate, correctScore101,
+                          "All conditions are met and the game must be created")), // 24
+          //
+          () -> getToken(ivanHoe, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 25
+          //
+          () -> checkToken(ivanHoe, new String[] {"read", "write"}, new TestHint(tokenApi, "",
+                  "Checking token 'scope' value, it must be - 'read write'")), // 26
+          //
+          () -> testCreateApi(correctScore, 400, bearerToken, gameExistAnswer,
+                  new TestHint(apiCreate, correctScore,
+                          "If the user tries to create a game without completing another one," +
+                                  " endpoint must respond with  HTTP BAD REQUEST status 400")), // 27
+          //
+
+          // Tests for status API
+          () -> testStatusApi(200, bearerToken, statusAnswer,
+                  new TestHint(apiStatus, "",
+                          "Endpoint must return information about a current game for player.")), // 28
+
+          // Tests for list API
+          () -> testListApi(200, bearerToken, listAnswer, new TestHint(apiList, "",
+                  " Server must respond with the HTTP OK status 200 and the following JSON that displays all" +
+                          " games on the server. Games are ordered by gameId in descending order")), // 29
+
+          // Tests for join API
+          () -> getToken(ivanHoe, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 30
+          //
+          () -> testJoinApi(400, bearerToken, autoGame, gameIds.get(0),
+                  new TestHint(apiJoin + "/" + gameIds.get(0), "",
+                          "If a player tries to join his own game," +
+                                  " the endpoint must respond with HTTP BAD REQUEST status 400")), // 31
+          //
+          () -> getToken(robinHood, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 32
+          () -> testJoinApi(200, bearerToken, joinAnswerIH, gameIds.get(0),
+                  new TestHint(apiJoin + "/" + gameIds.get(0), "",
+                          "Endpoint must respond with HTTP OK status 200 and JSON about game" +
+                                  " if user can join a game with specified id" +
+                                  " (game status is created and the user does not participate in other games):")), // 33
+          //
+          () -> testJoinApi(400, bearerToken, gameInProgress, gameIds.get(0),
+                  new TestHint(apiJoin + "/" + gameIds.get(0), "",
+                          "If a player tries to join a game which status is not open for joining " +
+                                  "(status is not created), the endpoint must respond " +
+                                  "with HTTP BAD REQUEST status 400")), // 34
+          //
+          () -> testJoinApi(400, bearerToken, unFinishedGame, gameIds.get(1),
+                  new TestHint(apiJoin + "/" + gameIds.get(1), "",
+                          "If a user is involved in other game on a server," +
+                                  " the endpoint must respond with HTTP BAD REQUEST status 400 ")), // 35
+          //
+
+          // reload
+          () -> restartApplication(), // 36
+
+          // Tests for list API
+          () -> testListApi(200, bearerToken, listAnswer2, new TestHint(apiList, "",
+                  " Server must respond with the HTTP OK status 200 and the following JSON that displays all" +
+                          " games on the server. Games are ordered by gameId in descending order")), // 37
+
+
+
+
   };
-
-
 }

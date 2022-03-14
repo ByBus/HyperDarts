@@ -59,5 +59,4 @@ public class OAuthConfiguration extends AuthorizationServerConfigurerAdapter {
         return converter;
     }
 
-
 }
