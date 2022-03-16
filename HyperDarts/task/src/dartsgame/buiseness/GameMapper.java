@@ -6,19 +6,15 @@ import dartsgame.persistense.GameStatus;
 import org.springframework.stereotype.Component;
 
 @Component
-public class GameMapper implements Mapper<GameDTO, GameEntity> {
-    @Override
-    public GameEntity mapToEntity(GameDTO dto) {
-        return null;
-    }
+public class GameMapper implements Mapper<GameEntity, GameDTO> {
 
     @Override
-    public GameDTO mapToDTO(GameEntity entity) {
+    public GameDTO map(GameEntity entity) {
         String status = entity.getGameStatus().lowerCaseName();
         if (entity.getGameStatus() == GameStatus.USER_WINS) {
             String winner = entity.getPlayerOneScores() < entity.getPlayerTwoScores() ?
                     entity.getPlayerOne() : entity.getPlayerTwo();
-            status = winner + "wins!";
+            status = winner + " wins!";
         }
         return new GameDTO(entity.getId(),
                 entity.getPlayerOne(),

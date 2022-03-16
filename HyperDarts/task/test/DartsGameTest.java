@@ -3,7 +3,6 @@ import com.google.gson.JsonObject;
 import dartsgame.DartsGameApplication;
 import org.hyperskill.hstest.dynamic.DynamicTest;
 import org.hyperskill.hstest.dynamic.input.DynamicTesting;
-import org.hyperskill.hstest.exception.outcomes.UnexpectedError;
 import org.hyperskill.hstest.exception.outcomes.WrongAnswer;
 import org.hyperskill.hstest.mocks.web.request.HttpRequest;
 import org.hyperskill.hstest.mocks.web.response.HttpResponse;
@@ -74,13 +73,13 @@ public class DartsGameTest extends SpringTest {
          "password": "ai0y9bMvyF6G"
       }""";
 
-    private final String wilhelmTell = """
-        {
-           "name": "Robin",
-           "lastname": "Hood",
-           "email": "wilhelmtell@acme.com",
-           "password": "bv0y9bMvyF7E"
-        }""";
+  private final String wilhelmTell = """
+      {
+         "name": "Wilhelm",
+         "lastname": "Tell",
+         "email": "wilhelmtell@acme.com",
+         "password": "bv0y9bMvyF7E"
+      }""";
 
   private final String wrongUser = """
       {
@@ -111,10 +110,10 @@ public class DartsGameTest extends SpringTest {
       {
          "targetScore": 501
       }""";
-    private final String correctScore101 = """
-        {
-           "targetScore": 101
-        }""";
+  private final String correctScore101 = """
+      {
+         "targetScore": 101
+      }""";
   private final String gameExistAnswer = """
       {
          "result": "You have an unfinished game!"
@@ -128,15 +127,15 @@ public class DartsGameTest extends SpringTest {
          "playerTwoScores": 101,
          "turn": "wilhelmtell@acme.com"
       }""";
-    private final String answerRH = """
-        {
-           "playerOne": "ivanhoe@acme.com",
-           "playerTwo": "",
-           "gameStatus": "created",
-           "playerOneScores": 501,
-           "playerTwoScores": 501,
-           "turn": "ivanhoe@acme.com"
-        }""";
+  private final String answerRH = """
+      {
+         "playerOne": "ivanhoe@acme.com",
+         "playerTwo": "",
+         "gameStatus": "created",
+         "playerOneScores": 501,
+         "playerTwoScores": 501,
+         "turn": "ivanhoe@acme.com"
+      }""";
 
   // for status API
   private final String emptyAnswer = "{}";
@@ -148,6 +147,56 @@ public class DartsGameTest extends SpringTest {
          "playerOneScores": 501,
          "playerTwoScores": 501,
          "turn": "ivanhoe@acme.com"
+      }""";
+
+  private final String statusAnswer2 = """
+      {
+         "playerOne": "ivanhoe@acme.com",
+         "playerTwo": "robinhood@acme.com",
+         "gameStatus": "ivanhoe@acme.com wins!",
+         "playerOneScores": 0,
+         "playerTwoScores": 141,
+         "turn": "ivanhoe@acme.com"
+      }""";
+
+  private final String statusAnswer3 = """
+      {
+         "playerOne": "wilhelmtell@acme.com",
+         "playerTwo": "robinhood@acme.com",
+         "gameStatus": "started",
+         "playerOneScores": 101,
+         "playerTwoScores": 101,
+         "turn": "wilhelmtell@acme.com"
+      }""";
+
+  private final String statusAnswer4 = """
+      {
+         "playerOne": "wilhelmtell@acme.com",
+         "playerTwo": "robinhood@acme.com",
+         "gameStatus": "playing",
+         "playerOneScores": 101,
+         "playerTwoScores": 101,
+         "turn": "robinhood@acme.com"
+      }""";
+
+  private final String statusAnswer5 = """
+      {
+         "playerOne": "wilhelmtell@acme.com",
+         "playerTwo": "robinhood@acme.com",
+         "gameStatus": "robinhood@acme.com wins!",
+         "playerOneScores": 101,
+         "playerTwoScores": 0,
+         "turn": "robinhood@acme.com"
+      }""";
+
+  private final String statusAnswer6 = """
+      {
+         "playerOne": "wilhelmtell@acme.com",
+         "playerTwo": "robinhood@acme.com",
+         "gameStatus": "robinhood@acme.com wins!",
+         "playerOneScores": 101,
+         "playerTwoScores": 0,
+         "turn": "robinhood@acme.com"
       }""";
 
   // for list API
@@ -190,6 +239,44 @@ public class DartsGameTest extends SpringTest {
       }]"""
           ;
 
+  private final String listAnswer3 = """
+      [{
+         "playerOne": "wilhelmtell@acme.com",
+         "playerTwo": "",
+         "gameStatus": "created",
+         "playerOneScores": 101,
+         "playerTwoScores": 101,
+         "turn": "wilhelmtell@acme.com"
+      },
+      {
+         "playerOne": "ivanhoe@acme.com",
+         "playerTwo": "robinhood@acme.com",
+         "gameStatus": "ivanhoe@acme.com wins!",
+         "playerOneScores": 0,
+         "playerTwoScores": 141,
+         "turn": "ivanhoe@acme.com"
+      }]"""
+          ;
+
+  private final String listAnswer4 = """
+      [{
+         "playerOne": "wilhelmtell@acme.com",
+         "playerTwo": "robinhood@acme.com",
+         "gameStatus": "started",
+         "playerOneScores": 101,
+         "playerTwoScores": 101,
+         "turn": "wilhelmtell@acme.com"
+      },
+      {
+         "playerOne": "ivanhoe@acme.com",
+         "playerTwo": "robinhood@acme.com",
+         "gameStatus": "ivanhoe@acme.com wins!",
+         "playerOneScores": 0,
+         "playerTwoScores": 141,
+         "turn": "ivanhoe@acme.com"
+      }]"""
+          ;
+
   // for join API
   private final String gameNotFound = """
       {
@@ -220,6 +307,223 @@ public class DartsGameTest extends SpringTest {
          "playerTwoScores": 501,
          "turn": "ivanhoe@acme.com"
       }""";
+
+  private final String joinAnswerRH = """
+      {
+         "playerOne": "wilhelmtell@acme.com",
+         "playerTwo": "robinhood@acme.com",
+         "gameStatus": "started",
+         "playerOneScores": 101,
+         "playerTwoScores": 101,
+         "turn": "wilhelmtell@acme.com"
+      }""";
+
+  // throws api
+  private final String correctThrows1 = """
+      {
+         "first": "1:1",
+         "second": "2:2",
+         "third": "3:3"
+      }""";
+
+  private final String correctThrows2 = """
+      {
+         "first": "3:20",
+         "second": "3:20",
+         "third": "3:20"
+      }""";
+
+  private final String correctThrows3 = """
+      {
+         "first": "2:25",
+         "second": "3:20",
+         "third": "3:20"
+      }""";
+
+  private final String correctThrows4 = """
+      {
+         "first": "2:25",
+         "second": "2:25",
+         "third": "3:9"
+      }""";
+
+  private final String correctThrows5 = """
+      {
+         "first": "3:17",
+         "second": "3:20",
+         "third": "3:10"
+      }""";
+
+  private final String correctThrows6 = """
+      {
+         "first": "2:10",
+         "second": "none",
+         "third": "none"
+      }""";
+
+  private final String wrongThrows1 = """
+      {
+         "first": "3:25",
+         "second": "1:10",
+         "third": "2:20"
+      }""";
+
+  private final String wrongThrows2 = """
+      {
+         "first": "2:22",
+         "second": "1:10",
+         "third": "2:20"
+      }""";
+
+  private final String wrongThrows3 = """
+      {
+         "first": "0:9",
+         "second": "1:10",
+         "third": "2:20"
+      }""";
+
+  private final String wrongThrows4 = """
+      {
+         "first": "1:26",
+         "second": "1:10",
+         "third": "2:20"
+      }""";
+
+  private final String wrongThrows5 = """
+      {
+         "first": "3:99",
+         "second": "1:10",
+         "third": "2:20"
+      }""";
+
+  private final String wrongBustThrows1 = """
+      {
+         "first": "3:20",
+         "second": "3:20",
+         "third": "3:20"
+      }""";
+
+  private final String CorrectBustThrows1 = """
+      {
+         "first": "3:20",
+         "second": "3:20",
+         "third": "none"
+      }""";
+
+  private final String winThrowsRH = """
+      {
+         "first": "3:17",
+         "second": "2:25",
+         "third": "none"
+      }""";
+
+
+  private final String wrongTurn = """
+      {
+         "result": "Wrong turn!"
+      }""";
+
+  private final String wrongThrowsAnswer = """
+      {
+         "result": "Wrong throws!"
+      }""";
+
+  private final String noGames = """
+      {
+         "result": "There are no games available!"
+      }""";
+
+  private final String throwsAnswer1 = """
+      {
+         "playerOne": "ivanhoe@acme.com",
+         "playerTwo": "robinhood@acme.com",
+         "gameStatus": "playing",
+         "playerOneScores": 487,
+         "playerTwoScores": 501,
+         "turn": "robinhood@acme.com"
+      }""";
+
+  private final String throwsAnswer2 = """
+      {
+         "playerOne": "ivanhoe@acme.com",
+         "playerTwo": "robinhood@acme.com",
+         "gameStatus": "playing",
+         "playerOneScores": 487,
+         "playerTwoScores": 321,
+         "turn": "ivanhoe@acme.com"
+      }""";
+
+  private final String throwsAnswer3 = """
+      {
+         "playerOne": "ivanhoe@acme.com",
+         "playerTwo": "robinhood@acme.com",
+         "gameStatus": "playing",
+         "playerOneScores": 317,
+         "playerTwoScores": 321,
+         "turn": "robinhood@acme.com"
+      }""";
+
+
+  private final String throwsAnswer4 = """
+      {
+         "playerOne": "ivanhoe@acme.com",
+         "playerTwo": "robinhood@acme.com",
+         "gameStatus": "playing",
+         "playerOneScores": 317,
+         "playerTwoScores": 141,
+         "turn": "ivanhoe@acme.com"
+      }""";
+
+  private final String throwsAnswer5 = """
+      {
+         "playerOne": "ivanhoe@acme.com",
+         "playerTwo": "robinhood@acme.com",
+         "gameStatus": "playing",
+         "playerOneScores": 147,
+         "playerTwoScores": 141,
+         "turn": "robinhood@acme.com"
+      }""";
+
+  private final String throwsAnswer6 = """
+      {
+         "playerOne": "ivanhoe@acme.com",
+         "playerTwo": "robinhood@acme.com",
+         "gameStatus": "playing",
+         "playerOneScores": 147,
+         "playerTwoScores": 141,
+         "turn": "ivanhoe@acme.com"
+      }""";
+
+  private final String throwsAnswer7 = """
+      {
+         "playerOne": "ivanhoe@acme.com",
+         "playerTwo": "robinhood@acme.com",
+         "gameStatus": "playing",
+         "playerOneScores": 20,
+         "playerTwoScores": 141,
+         "turn": "robinhood@acme.com"
+      }""";
+
+  private final String throwsAnswer8 = """
+      {
+         "playerOne": "ivanhoe@acme.com",
+         "playerTwo": "robinhood@acme.com",
+         "gameStatus": "playing",
+         "playerOneScores": 20,
+         "playerTwoScores": 141,
+         "turn": "ivanhoe@acme.com"
+      }""";
+
+  private final String throwsAnswer9 = """
+      {
+         "playerOne": "ivanhoe@acme.com",
+         "playerTwo": "robinhood@acme.com",
+         "gameStatus": "ivanhoe@acme.com wins!",
+         "playerOneScores": 0,
+         "playerTwoScores": 141,
+         "turn": "ivanhoe@acme.com"
+      }""";
+
 
 
   public DartsGameTest() {
@@ -263,11 +567,11 @@ public class DartsGameTest extends SpringTest {
   }
 
   private CheckResult testApi(String api, String method,
-                              int status, String token, String answer, TestHint hint) {
+                              String token, String answer, TestHint hint) {
 
     System.out.println(hint.toString());
 
-    HttpResponse response = checkResponseStatus(token, "", status, api, method);
+    HttpResponse response = checkResponseStatus(token, "", 403, api, method);
 
     // Check JSON in response
     if (response.getStatusCode() == 200) {
@@ -429,6 +733,13 @@ public class DartsGameTest extends SpringTest {
                       .value("playerTwoScores", answerJson.get("playerTwoScores").getAsInt())
                       .value("turn", answerJson.get("turn").getAsString()));
 
+    } else if (response.getStatusCode() == 404) {
+      if (!response.getJson().isJsonObject()) {
+        return CheckResult.wrong("Wrong object in response, expected JSON.");
+      }
+      if (response.getJson().getAsJsonObject().size() != 0) {
+        return CheckResult.wrong("Expected empty JSON.");
+      }
     } else {
       expect(response.getContent()).asJson().check(
               isObject());
@@ -465,9 +776,7 @@ public class DartsGameTest extends SpringTest {
   }
 
 
-  private CheckResult testListApi(int status, String token, String answer, TestHint hint) {
-
-    System.out.println(hint.toString());
+  private CheckResult testListApi(int status, String token, String answer) {
 
     HttpResponse response = checkResponseStatus(token, "", status, "/api/game/list", "GET");
 
@@ -481,7 +790,7 @@ public class DartsGameTest extends SpringTest {
 
     // Check JSON in response
     if (response.getStatusCode() == 200) {
-    for (int i = 0; i < responseJson.size(); i++) {
+      for (int i = 0; i < responseJson.size(); i++) {
         expect(responseJson.get(i).getAsJsonObject().toString()).asJson()
                 .check(isObject()
                         .value("gameId", isInteger())
@@ -499,16 +808,33 @@ public class DartsGameTest extends SpringTest {
     return CheckResult.correct();
   }
 
-  /**
-   * Method for restarting application
-   *
-   */
-  private CheckResult restartApplication() {
-    try {
-      reloadSpring();
-    } catch (Exception ex) {
-      throw new UnexpectedError(ex.getMessage());
+  private CheckResult testThrowsApi(String body, int status, String token, String answer,
+                                    TestHint hint) {
+
+    System.out.println(hint.toString());
+
+    HttpResponse response = checkResponseStatus(token, body, status, "/api/game/throws", "POST");
+
+    JsonObject answerJson = getJson(answer).getAsJsonObject();
+
+    if (response.getStatusCode() == 200) {
+      expect(response.getContent()).asJson().check(
+              isObject()
+                      .value("gameId", isInteger())
+                      .value("playerOne", answerJson.get("playerOne").getAsString())
+                      .value("playerTwo", answerJson.get("playerTwo").getAsString())
+                      .value("gameStatus", answerJson.get("gameStatus").getAsString())
+                      .value("playerOneScores", answerJson.get("playerOneScores").getAsInt())
+                      .value("playerTwoScores", answerJson.get("playerTwoScores").getAsInt())
+                      .value("turn", answerJson.get("turn").getAsString()));
+    } else {
+
+      // Check JSON in response
+      expect(response.getContent()).asJson().check(
+              isObject()
+                      .value("result", answerJson.get("result").getAsString()));
     }
+
     return CheckResult.correct();
   }
 
@@ -529,21 +855,21 @@ public class DartsGameTest extends SpringTest {
                   "Testing token endpoint with correct credentials and correct user and scope 'update'")), // 4
           () -> checkToken(ivanHoe, new String[] {"update"}, new TestHint(tokenApi, "",
                   "Checking token 'scope' value, it must be - 'update'")), // 5
-          () -> testApi(apiCreate, "POST", 403, bearerToken, "ivanhoe@acme.com",
+          () -> testApi(apiCreate, "POST", bearerToken, "ivanhoe@acme.com",
                   new TestHint(apiCreate, "", "The token with the wrong scope (update)" +
                           " should not be able to access api")), // 6
           () -> getToken(ivanHoe, "write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
                   "Testing token endpoint with correct credentials and correct user and scope 'write'")), // 7
           () -> checkToken(ivanHoe, new String[] {"write"}, new TestHint(tokenApi, "",
                   "Checking token 'scope' value, it must be - 'write'")), // 8
-          () -> testApi(apiList, "GET", 403, bearerToken, "ivanhoe@acme.com",
+          () -> testApi(apiList, "GET", bearerToken, "ivanhoe@acme.com",
                   new TestHint(apiList, "", "The token with the wrong scope (write)" +
                           " should not be able to access api with method GET")), // 9
           () -> getToken(ivanHoe, "read", HttpStatus.OK.value(), new TestHint(tokenApi, "",
                   "Testing token endpoint with correct credentials and correct user and scope 'read'")), // 10
           () -> checkToken(ivanHoe, new String[] {"read"}, new TestHint(tokenApi, "",
                   "Checking token 'scope' value, it must be - 'read'")), // 11
-          () -> testApi(apiCreate, "POST", 403, bearerToken, "ivanhoe@acme.com",
+          () -> testApi(apiCreate, "POST", bearerToken, "ivanhoe@acme.com",
                   new TestHint(apiCreate, "", "The token with the wrong scope (read)" +
                           " should not be able to access api with method POST")), // 12
 
@@ -560,9 +886,7 @@ public class DartsGameTest extends SpringTest {
                                   " with HTTP NOT FOUND status 404")), // 14
 
           // Tests for list API
-          () -> testListApi(404, bearerToken, emptyArray, new TestHint(apiList, "",
-                  "If the server has no current games, the endpoint must respond with the" +
-                          " HTTP NOT FOUND status 404")), // 15
+          () -> testListApi(404, bearerToken, emptyArray), // 15
 
 
           // Tests for create API
@@ -615,9 +939,7 @@ public class DartsGameTest extends SpringTest {
                           "Endpoint must return information about a current game for player.")), // 28
 
           // Tests for list API
-          () -> testListApi(200, bearerToken, listAnswer, new TestHint(apiList, "",
-                  " Server must respond with the HTTP OK status 200 and the following JSON that displays all" +
-                          " games on the server. Games are ordered by gameId in descending order")), // 29
+          () -> testListApi(200, bearerToken, listAnswer), // 29
 
           // Tests for join API
           () -> getToken(ivanHoe, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
@@ -648,13 +970,194 @@ public class DartsGameTest extends SpringTest {
                                   " the endpoint must respond with HTTP BAD REQUEST status 400 ")), // 35
           //
 
-          // reload
-          () -> restartApplication(), // 36
+          // Tests for list API
+          () -> testListApi(200, bearerToken, listAnswer2), // 36
+
+          // Tests for throws API
+          () -> testThrowsApi(correctThrows1, 400, bearerToken, wrongTurn,
+                  new TestHint(apiThrows, correctThrows1,
+                          "If a player tries to make a move out of turn," +
+                                  " endpoint must respond with HTTP BAD REQUEST status 400")), // 37
+          //
+          () -> getToken(ivanHoe, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 38
+          //
+          () -> testThrowsApi(correctThrows1, 200, bearerToken, throwsAnswer1,
+                  new TestHint(apiThrows, correctThrows1,
+                          "If user makes correct throws scores and turn must changed," +
+                                  " endpoint must respond with HTTP OK status 200")), // 39
+          //
+          () -> getToken(robinHood, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 40
+          //
+          () -> testThrowsApi(correctThrows2, 200, bearerToken, throwsAnswer2,
+                  new TestHint(apiThrows, correctThrows2,
+                          "If user makes correct throws scores and turn must changed," +
+                                  " endpoint must respond with HTTP OK status 200")), // 41
+          //
+          () -> getToken(ivanHoe, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 42
+          //
+          () -> testThrowsApi(correctThrows3, 200, bearerToken, throwsAnswer3,
+                  new TestHint(apiThrows, correctThrows3,
+                          "If user makes correct throws scores and turn must changed," +
+                                  " endpoint must respond with HTTP OK status 200")), // 43
+          //
+          () -> getToken(robinHood, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 44
+          //
+          () -> testThrowsApi(correctThrows2, 200, bearerToken, throwsAnswer4,
+                  new TestHint(apiThrows, correctThrows2,
+                          "If user makes correct throws scores and turn must changed," +
+                                  " endpoint must respond with HTTP OK status 200")), // 45
+          //
+          () -> getToken(ivanHoe, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 46
+          //
+          () -> testThrowsApi(correctThrows3, 200, bearerToken, throwsAnswer5,
+                  new TestHint(apiThrows, correctThrows3,
+                          "If user makes correct throws scores and turn must changed," +
+                                  " endpoint must respond with HTTP OK status 200")), // 47
+          //
+          () -> getToken(robinHood, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 48
+          //
+          () -> testThrowsApi(correctThrows2, 200, bearerToken, throwsAnswer6,
+                  new TestHint(apiThrows, correctThrows2,
+                          "If user BUST turn must changed, but scores not" +
+                                  " endpoint must respond with HTTP OK status 200")), // 49
+          //
+          () -> getToken(ivanHoe, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 50
+          //
+          () -> testThrowsApi(correctThrows4, 200, bearerToken, throwsAnswer7,
+                  new TestHint(apiThrows, correctThrows4,
+                          "If user makes correct throws scores and turn must changed," +
+                                  " endpoint must respond with HTTP OK status 200")), // 51
+          //
+          () -> getToken(robinHood, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 52
+          //
+          () -> testThrowsApi(correctThrows5, 200, bearerToken, throwsAnswer8,
+                  new TestHint(apiThrows, correctThrows5,
+                          "If user BUST turn must changed, but scores not" +
+                                  " endpoint must respond with HTTP OK status 200")), // 53
+          //
+          () -> getToken(ivanHoe, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 54
+          //
+          () -> testThrowsApi(correctThrows6, 200, bearerToken, throwsAnswer9,
+                  new TestHint(apiThrows, correctThrows6,
+                          "If user wins game status and user score must changes, but turn not" +
+                                  " endpoint must respond with HTTP OK status 200")), // 55
+          //
+          () -> testThrowsApi(correctThrows6, 404, bearerToken, noGames,
+                  new TestHint(apiThrows, correctThrows6,
+                          "If no game is found for the user" +
+                                  " endpoint must respond with HTTP NOT FOUND status 404")), // 56
+          //
+
+          // Tests for status API
+          () -> testStatusApi(200, bearerToken, statusAnswer2,
+                  new TestHint(apiStatus, "",
+                          "Endpoint must return information about the last game played.")), // 57
+
+          // Tests for join API
+          () -> getToken(wilhelmTell, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 58
+          //
+          () -> testJoinApi(400, bearerToken, gameInProgress, gameIds.get(0),
+                  new TestHint(apiJoin + "/" + gameIds.get(0), "",
+                          "If a player tries to join a game which status is not open for joining " +
+                                  "(status is not created), the endpoint must respond " +
+                                  "with HTTP BAD REQUEST status 400")), // 59
+          //
 
           // Tests for list API
-          () -> testListApi(200, bearerToken, listAnswer2, new TestHint(apiList, "",
-                  " Server must respond with the HTTP OK status 200 and the following JSON that displays all" +
-                          " games on the server. Games are ordered by gameId in descending order")), // 37
+          () -> testListApi(200, bearerToken, listAnswer3), // 60
+          //
+
+          // Tests for join API
+          () -> getToken(robinHood, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 61
+          () -> testJoinApi(200, bearerToken, joinAnswerRH, gameIds.get(1),
+                  new TestHint(apiJoin + "/" + gameIds.get(0), "",
+                          "Endpoint must respond with HTTP OK status 200 and JSON about game" +
+                                  " if user can join a game with specified id" +
+                                  " (game status is created and the user does not participate in other games):")), // 62
+          //
+
+          // Tests for list API
+          () -> testListApi(200, bearerToken, listAnswer4), // 63
+          //
+
+          // Tests for throws API
+          () -> getToken(wilhelmTell, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 64
+          //
+          () -> testThrowsApi(wrongThrows1, 400, bearerToken, wrongThrowsAnswer,
+                  new TestHint(apiThrows, wrongThrows1,
+                          "If a player enter a wrong throws," +
+                                  " endpoint must respond with HTTP BAD REQUEST status 400")), // 65
+          //
+          () -> testStatusApi(200, bearerToken, statusAnswer3,
+                  new TestHint(apiStatus, "",
+                          "Game state after sending wrong information about throws, must not be changed")), // 66
+          //
+          () -> testThrowsApi(wrongThrows2, 400, bearerToken, wrongThrowsAnswer,
+                  new TestHint(apiThrows, wrongThrows2,
+                          "If a player enter a wrong throws," +
+                                  " endpoint must respond with HTTP BAD REQUEST status 400")), // 67
+          //
+          () -> testThrowsApi(wrongThrows3, 400, bearerToken, wrongThrowsAnswer,
+                  new TestHint(apiThrows, wrongThrows3,
+                          "If a player enter a wrong throws," +
+                                  " endpoint must respond with HTTP BAD REQUEST status 400")), // 68
+          //
+          () -> testThrowsApi(wrongThrows4, 400, bearerToken, wrongThrowsAnswer,
+                  new TestHint(apiThrows, wrongThrows4,
+                          "If a player enter a wrong throws," +
+                                  " endpoint must respond with HTTP BAD REQUEST status 400")), // 69
+          //
+          () -> testThrowsApi(wrongThrows5, 400, bearerToken, wrongThrowsAnswer,
+                  new TestHint(apiThrows, wrongThrows5,
+                          "If a player enter a wrong throws," +
+                                  " endpoint must respond with HTTP BAD REQUEST status 400")), // 70
+          //
+          () -> testThrowsApi(wrongBustThrows1, 400, bearerToken, wrongThrowsAnswer,
+                  new TestHint(apiThrows, wrongBustThrows1,
+                          "If a player enter a wrong throws (extra throws)," +
+                                  " endpoint must respond with HTTP BAD REQUEST status 400")), // 71
+          //
+          () -> testStatusApi(200, bearerToken, statusAnswer3,
+                  new TestHint(apiStatus, "",
+                          "Game state after sending wrong information about throws, must not be changed")), // 72
+          //
+          () -> testThrowsApi(CorrectBustThrows1, 200, bearerToken, statusAnswer4,
+                  new TestHint(apiThrows, CorrectBustThrows1,
+                          "If user BUST turn must changed, but scores not" +
+                                  " endpoint must respond with HTTP OK status 200")), // 73
+          //
+          () -> testStatusApi(200, bearerToken, statusAnswer4,
+                  new TestHint(apiStatus, "",
+                          "If user BUST turn must changed, but scores not" +
+                                  " endpoint must respond with HTTP OK status 200")), // 74
+          //
+          () -> getToken(robinHood, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 75
+          //
+          () -> testThrowsApi(winThrowsRH, 200, bearerToken, statusAnswer5,
+                  new TestHint(apiThrows, winThrowsRH,
+                          "If user wins game status and user score must changes, but turn not" +
+                                  " endpoint must respond with HTTP OK status 200")), // 76
+
+          // Tests for status API
+          () -> testStatusApi(200, bearerToken, statusAnswer6,
+                  new TestHint(apiStatus, "",
+                          "Endpoint must return information about the last game played.")), // 77
+
+
+
 
 
 

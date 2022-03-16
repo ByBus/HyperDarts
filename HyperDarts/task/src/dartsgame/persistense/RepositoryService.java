@@ -15,8 +15,9 @@ public class RepositoryService {
     }
 
     public List<GameEntity> getUnfinishedGames(String userName) {
-        return gameRepository.findAllByPlayerOneOrPlayerTwoAndGameStatusNotOrderByIdDesc(
+        return gameRepository.findAllByPlayerOneAndGameStatusNotOrPlayerTwoAndGameStatusNotOrderByIdDesc(
                 userName,
+                GameStatus.USER_WINS,
                 userName,
                 GameStatus.USER_WINS
         );
@@ -36,5 +37,22 @@ public class RepositoryService {
 
     public GameEntity getGame(long id) {
         return gameRepository.findById(id).orElse(null);
+    }
+
+    public GameEntity getCurrentGame(String currentUser) {
+        return gameRepository.findByPlayerOneAndGameStatusInOrPlayerTwoAndGameStatusIn(
+                currentUser,
+                List.of(GameStatus.STARTED, GameStatus.PLAYING),
+                currentUser,
+                List.of(GameStatus.STARTED, GameStatus.PLAYING)
+        );
+    }
+
+    public GameEntity getLastGame(String currentUser) {
+        return gameRepository.findFirstByPlayerOneAndGameStatusOrPlayerTwoAndGameStatusOrderByIdDesc(
+                currentUser,
+                GameStatus.USER_WINS,
+                currentUser,
+                GameStatus.USER_WINS);
     }
 }

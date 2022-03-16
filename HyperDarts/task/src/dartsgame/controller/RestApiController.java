@@ -1,11 +1,13 @@
 package dartsgame.controller;
 
+import dartsgame.buiseness.GameMaster;
 import dartsgame.buiseness.GameValidator;
 import dartsgame.buiseness.Mapper;
 import dartsgame.buiseness.ScoreValidator;
 import dartsgame.models.dto.GameDTO;
 import dartsgame.models.dto.ScoreDTO;
 import dartsgame.models.dto.ResultDTO;
+import dartsgame.models.dto.ThrowsDTO;
 import dartsgame.persistense.GameEntity;
 import dartsgame.persistense.GameStatus;
 import dartsgame.persistense.RepositoryService;
@@ -16,19 +18,23 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
 public class RestApiController {
     private final RepositoryService repository;
-    private final Mapper<GameDTO, GameEntity> gameMapper;
+    private final Mapper<GameEntity, GameDTO> gameMapper;
+    private final GameMaster gameMaster;
 
     @Autowired
     public RestApiController(RepositoryService repository,
-                             Mapper<GameDTO, GameEntity> gameMapper) {
+                             Mapper<GameEntity, GameDTO> gameMapper,
+                             GameMaster gameMaster) {
         this.repository = repository;
         this.gameMapper = gameMapper;
+        this.gameMaster = gameMaster;
     }
 
     @PostMapping("/api/game/create")
@@ -53,7 +59,7 @@ public class RestApiController {
                 .turn(authenticatedUser)
                 .build();
         newGame = repository.create(newGame);
-        return ResponseEntity.ok(gameMapper.mapToDTO(newGame));
+        return ResponseEntity.ok(gameMapper.map(newGame));
     }
 
     @GetMapping("/api/game/list")
@@ -63,7 +69,7 @@ public class RestApiController {
             return new ResponseEntity<>("[]", HttpStatus.NOT_FOUND);
         }
         List<GameDTO> gamesDTOs = games.stream()
-                .map(gameMapper::mapToDTO)
+                .map(gameMapper::map)
                 .collect(Collectors.toList());
         return new ResponseEntity<>(gamesDTOs, HttpStatus.OK);
     }
@@ -83,20 +89,33 @@ public class RestApiController {
         game.setGameStatus(GameStatus.STARTED);
         game.setPlayerTwo(user);
         repository.update(game);
-        return new ResponseEntity<>(gameMapper.mapToDTO(game), HttpStatus.OK);
+        return new ResponseEntity<>(gameMapper.map(game), HttpStatus.OK);
     }
 
     @GetMapping("/api/game/status")
     private ResponseEntity<?> getGameStatus(Authentication authentication) {
-        List<GameEntity> unfinishedGames = repository.getUnfinishedGames(authentication.getName());
-        if (unfinishedGames.isEmpty()) {
+        List<GameEntity> games = repository.getUnfinishedGames(authentication.getName());
+        GameEntity lastGame = repository.getLastGame(authentication.getName());
+        if (games.isEmpty() && lastGame == null) {
             return new ResponseEntity<>("{}", HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>(gameMapper.mapToDTO(unfinishedGames.get(0)), HttpStatus.OK);
+        lastGame = games.isEmpty() ? lastGame : games.get(0);
+        return new ResponseEntity<>(gameMapper.map(lastGame), HttpStatus.OK);
     }
 
     @PostMapping("/api/game/throws")
-    private ResultDTO setThrows(Authentication authentication) {
-        return new ResultDTO(authentication.getName());
+    private ResponseEntity<?> setThrows(Authentication authentication,
+                                @RequestBody @Valid ThrowsDTO dartThrows) {
+        String currentUser = authentication.getName();
+        gameMaster.setUser(currentUser);
+        try {
+            gameMaster.setThrows(dartThrows);
+            GameEntity game = gameMaster.updateGame();
+            return new ResponseEntity<>(gameMapper.map(game), HttpStatus.OK);
+        } catch (NotFoundException e) {
+            return new ResponseEntity<>(new ResultDTO(e.getMessage()), HttpStatus.NOT_FOUND);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(new ResultDTO(e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
     }
 }
