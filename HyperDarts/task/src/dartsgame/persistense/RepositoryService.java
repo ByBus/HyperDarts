@@ -27,7 +27,15 @@ public class RepositoryService {
         );
     }
 
-    public GameEntity create(GameEntity newGame) {
+    public GameEntity create(String authenticatedUser, int score) {
+        GameEntity newGame = GameEntity.builder()
+                .gameStatus(GameStatus.CREATED)
+                .playerOne(authenticatedUser)
+                .playerTwo("")
+                .playerOneScores(score)
+                .playerTwoScores(score)
+                .turn(authenticatedUser)
+                .build();
         return gameRepository.save(newGame);
     }
 
@@ -44,20 +52,22 @@ public class RepositoryService {
     }
 
     public GameEntity getCurrentGame(String currentUser) {
+        List<GameStatus> statuses = List.of(GameStatus.STARTED, GameStatus.PLAYING);
         return gameRepository.findByPlayerOneAndGameStatusInOrPlayerTwoAndGameStatusIn(
                 currentUser,
-                List.of(GameStatus.STARTED, GameStatus.PLAYING),
+                statuses,
                 currentUser,
-                List.of(GameStatus.STARTED, GameStatus.PLAYING)
+                statuses
         );
     }
 
     public GameEntity getLastGame(String currentUser) {
+        List<GameStatus> statuses = List.of(GameStatus.USER_WINS, GameStatus.NOBODY_WINS);
         return gameRepository.findFirstByPlayerOneAndGameStatusInOrPlayerTwoAndGameStatusInOrderByIdDesc(
                 currentUser,
-                List.of(GameStatus.USER_WINS, GameStatus.NOBODY_WINS),
+                statuses,
                 currentUser,
-                List.of(GameStatus.USER_WINS, GameStatus.NOBODY_WINS)
+                statuses
         );
     }
 

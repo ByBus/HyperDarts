@@ -1,6 +1,9 @@
 package dartsgame.controller;
 
-import dartsgame.buiseness.*;
+import dartsgame.buiseness.GameMaster;
+import dartsgame.buiseness.GameValidator;
+import dartsgame.buiseness.Mapper;
+import dartsgame.buiseness.ScoreValidator;
 import dartsgame.models.dto.*;
 import dartsgame.persistense.GameEntity;
 import dartsgame.persistense.GameMoveEntity;
@@ -51,15 +54,7 @@ public class RestApiController {
         if (!unfinishedGames.isEmpty()) {
             return new ResponseEntity<>(new ResultDTO.HasUnfinishedGames(), HttpStatus.BAD_REQUEST);
         }
-        GameEntity newGame = GameEntity.builder()
-                .gameStatus(GameStatus.CREATED)
-                .playerOne(authenticatedUser)
-                .playerTwo("")
-                .playerOneScores(score.getTargetScore())
-                .playerTwoScores(score.getTargetScore())
-                .turn(authenticatedUser)
-                .build();
-        newGame = repository.create(newGame);
+        GameEntity newGame = repository.create(authenticatedUser, score.getTargetScore());
         return ResponseEntity.ok(gameMapper.map(newGame));
     }
 
