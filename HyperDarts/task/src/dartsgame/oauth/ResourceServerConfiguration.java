@@ -41,8 +41,12 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
         http
                 .authorizeRequests()
                 .antMatchers("/actuator/shutdown").permitAll() // needs to run test
+                .antMatchers(HttpMethod.GET, "/api/history/**")
+                .access("(#oauth2.hasScope('read') and hasAnyRole('ROLE_GAMER', 'ROLE_REFEREE'))")
                 .antMatchers(HttpMethod.GET, "/**")
                 .access("(#oauth2.hasScope('read') and hasRole('ROLE_GAMER'))")
+                .antMatchers(HttpMethod.PUT, "/api/game/cancel")
+                .access("(#oauth2.hasScope('update') and hasRole('ROLE_REFEREE'))")
                 .antMatchers(HttpMethod.POST, "/**")
                 .access("(#oauth2.hasScope('write') and hasRole('ROLE_GAMER'))")
                 .and()

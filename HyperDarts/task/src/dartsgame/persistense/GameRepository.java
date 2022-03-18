@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface GameRepository extends CrudRepository<GameEntity, Long> {
+interface GameRepository extends CrudRepository<GameEntity, Long> {
 
     List<GameEntity> findAllByPlayerOneAndGameStatusNotOrPlayerTwoAndGameStatusNotOrderByIdDesc(String playerOne,
                                                                                                 GameStatus gameStatus1,
@@ -20,8 +20,8 @@ public interface GameRepository extends CrudRepository<GameEntity, Long> {
                                                                         String playerTwo,
                                                                         List<GameStatus> statuses2);
 
-    GameEntity findFirstByPlayerOneAndGameStatusOrPlayerTwoAndGameStatusOrderByIdDesc(String playerOne,
-                                                                                      GameStatus statuses1,
-                                                                                      String playerTwo,
-                                                                                      GameStatus statuses2);
+    GameEntity findFirstByPlayerOneAndGameStatusInOrPlayerTwoAndGameStatusInOrderByIdDesc(String playerOne,
+                                                                                          List<GameStatus> statuses1,
+                                                                                          String playerTwo,
+                                                                                          List<GameStatus> statuses2);
 }

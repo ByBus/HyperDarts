@@ -1,14 +1,9 @@
 package dartsgame.controller;
 
-import dartsgame.buiseness.GameMaster;
-import dartsgame.buiseness.GameValidator;
-import dartsgame.buiseness.Mapper;
-import dartsgame.buiseness.ScoreValidator;
-import dartsgame.models.dto.GameDTO;
-import dartsgame.models.dto.ScoreDTO;
-import dartsgame.models.dto.ResultDTO;
-import dartsgame.models.dto.ThrowsDTO;
+import dartsgame.buiseness.*;
+import dartsgame.models.dto.*;
 import dartsgame.persistense.GameEntity;
+import dartsgame.persistense.GameMoveEntity;
 import dartsgame.persistense.GameStatus;
 import dartsgame.persistense.RepositoryService;
 import javassist.NotFoundException;
@@ -26,20 +21,26 @@ import java.util.stream.Collectors;
 public class RestApiController {
     private final RepositoryService repository;
     private final Mapper<GameEntity, GameDTO> gameMapper;
+    private final Mapper<GameEntity, GameMoveEntity> gameToMoveEntityMapper;
     private final GameMaster gameMaster;
+    private final Mapper<GameMoveEntity, GameMoveDTO> gameMoveMapper;
 
     @Autowired
     public RestApiController(RepositoryService repository,
                              Mapper<GameEntity, GameDTO> gameMapper,
+                             Mapper<GameMoveEntity, GameMoveDTO> gameMoveMapper,
+                             Mapper<GameEntity, GameMoveEntity> gameToMoveEntityMapper,
                              GameMaster gameMaster) {
         this.repository = repository;
         this.gameMapper = gameMapper;
+        this.gameMoveMapper = gameMoveMapper;
+        this.gameToMoveEntityMapper = gameToMoveEntityMapper;
         this.gameMaster = gameMaster;
     }
 
     @PostMapping("/api/game/create")
     private ResponseEntity<?> createGame(Authentication authentication,
-                              @RequestBody ScoreDTO score) {
+                                         @RequestBody ScoreDTO score) {
         String authenticatedUser = authentication.getName();
         try {
             new ScoreValidator(score.getTargetScore()).validOrThrow();
@@ -71,12 +72,12 @@ public class RestApiController {
         List<GameDTO> gamesDTOs = games.stream()
                 .map(gameMapper::map)
                 .collect(Collectors.toList());
-        return new ResponseEntity<>(gamesDTOs, HttpStatus.OK);
+        return ResponseEntity.ok(gamesDTOs);
     }
 
     @GetMapping("/api/game/join/{id}")
     private ResponseEntity<?> joinGame(Authentication authentication,
-                               @PathVariable long id) {
+                                       @PathVariable long id) {
         String user = authentication.getName();
         GameEntity game = repository.getGame(id);
         try {
@@ -89,7 +90,8 @@ public class RestApiController {
         game.setGameStatus(GameStatus.STARTED);
         game.setPlayerTwo(user);
         repository.update(game);
-        return new ResponseEntity<>(gameMapper.map(game), HttpStatus.OK);
+        repository.create(gameToMoveEntityMapper.map(game));
+        return ResponseEntity.ok(gameMapper.map(game));
     }
 
     @GetMapping("/api/game/status")
@@ -100,22 +102,38 @@ public class RestApiController {
             return new ResponseEntity<>("{}", HttpStatus.NOT_FOUND);
         }
         lastGame = games.isEmpty() ? lastGame : games.get(0);
-        return new ResponseEntity<>(gameMapper.map(lastGame), HttpStatus.OK);
+        return ResponseEntity.ok(gameMapper.map(lastGame));
     }
 
     @PostMapping("/api/game/throws")
     private ResponseEntity<?> setThrows(Authentication authentication,
-                                @RequestBody @Valid ThrowsDTO dartThrows) {
+                                        @RequestBody @Valid ThrowsDTO dartThrows) {
         String currentUser = authentication.getName();
         gameMaster.setUser(currentUser);
         try {
             gameMaster.setThrows(dartThrows);
             GameEntity game = gameMaster.updateGame();
+            repository.create(gameToMoveEntityMapper.map(game));
             return new ResponseEntity<>(gameMapper.map(game), HttpStatus.OK);
         } catch (NotFoundException e) {
             return new ResponseEntity<>(new ResultDTO(e.getMessage()), HttpStatus.NOT_FOUND);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(new ResultDTO(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
+    }
+
+    @GetMapping("api/history/{gameId}")
+    private ResponseEntity<?> getGameHistory(@PathVariable long gameId) {
+        if (gameId < 0) {
+            return new ResponseEntity<>(new ResultDTO.WrongRequest(), HttpStatus.BAD_REQUEST);
+        }
+        List<GameMoveEntity> history = repository.getGameHistory(gameId);
+        if (history.isEmpty()) {
+            return new ResponseEntity<>(new ResultDTO.GameNotFound(), HttpStatus.NOT_FOUND);
+        }
+        List<GameMoveDTO> historyDTO = history.stream()
+                .map(gameMoveMapper::map)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(historyDTO);
     }
 }

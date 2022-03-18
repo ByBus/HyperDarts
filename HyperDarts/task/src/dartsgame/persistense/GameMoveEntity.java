@@ -8,20 +8,21 @@ import lombok.NoArgsConstructor;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "game")
+@Table(name = "game_move")
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 @Builder
-public class GameEntity {
+public class GameMoveEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue
     private long id;
 
+    private long gameId;
+    private int move = 0;
     private String playerOne;
     private String playerTwo;
-    @Enumerated(EnumType.STRING)
-    private GameStatus gameStatus;
+    private String gameStatus;
     private int playerOneScores;
     private int playerTwoScores;
     private String turn;

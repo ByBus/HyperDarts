@@ -50,6 +50,9 @@ public class DartsGameTest extends SpringTest {
   private final String apiStatus = "/api/game/status";
   private final String apiThrows = "/api/game/throws";
   private final String tokenApi = "/oauth/token";
+  private final String historyApi = "/api/history/";
+  private final String cancelApi = "/api/game/cancel";
+  private final String revertApi = "/api/game/revert";
 
   private final List<Integer> gameIds = new ArrayList();
 
@@ -87,6 +90,14 @@ public class DartsGameTest extends SpringTest {
          "lastname": "Hood",
          "email": "bobinhood@acme.com",
          "password": "be0y9bMvyF6G"
+      }""";
+
+  private final String referee = """
+      {
+         "name": "Judge",
+         "lastname": "Dredd",
+         "email": "judgedredd@acme.com",
+         "password": "iAmALaw100500"
       }""";
 
   private final String jwtSigningKey = """
@@ -198,6 +209,27 @@ public class DartsGameTest extends SpringTest {
          "playerTwoScores": 0,
          "turn": "robinhood@acme.com"
       }""";
+
+  private final String statusAnswer7 = """
+      {
+        "playerOne" : "ivanhoe@acme.com",
+        "playerTwo" : "robinhood@acme.com",
+        "gameStatus" : "playing",
+        "playerOneScores" : 487,
+        "playerTwoScores" : 501,
+        "turn" : "robinhood@acme.com"
+      }""";
+
+  private final String statusAnswer8 = """
+      {
+        "playerOne" : "ivanhoe@acme.com",
+        "playerTwo" : "robinhood@acme.com",
+        "gameStatus" : "playing",
+        "playerOneScores" : 487,
+        "playerTwoScores" : 321,
+        "turn" : "ivanhoe@acme.com"
+      }""";
+
 
   // for list API
   private final String emptyArray = "[]";
@@ -316,6 +348,16 @@ public class DartsGameTest extends SpringTest {
          "playerOneScores": 101,
          "playerTwoScores": 101,
          "turn": "wilhelmtell@acme.com"
+      }""";
+
+  private final String joinAnswerRH1 = """
+      {
+        "playerOne": "ivanhoe@acme.com",
+        "playerTwo": "robinhood@acme.com",
+        "gameStatus": "started",
+        "playerOneScores": 501,
+        "playerTwoScores": 501,
+        "turn": "ivanhoe@acme.com"
       }""";
 
   // throws api
@@ -524,6 +566,225 @@ public class DartsGameTest extends SpringTest {
          "turn": "ivanhoe@acme.com"
       }""";
 
+  private final String historyNotFound = """
+      {
+         "result": "Game not found!"
+      }""";
+
+  private final String historyBad = """
+      {
+         "result": "Wrong request!"
+      }""";
+
+
+  private final String historyAnswer1 = """
+      [ {
+        "move" : 0,
+        "playerOne" : "ivanhoe@acme.com",
+        "playerTwo" : "robinhood@acme.com",
+        "gameStatus" : "started",
+        "playerOneScores" : 501,
+        "playerTwoScores" : 501,
+        "turn" : "ivanhoe@acme.com"
+      }, {
+        "move" : 1,
+        "playerOne" : "ivanhoe@acme.com",
+        "playerTwo" : "robinhood@acme.com",
+        "gameStatus" : "playing",
+        "playerOneScores" : 487,
+        "playerTwoScores" : 501,
+        "turn" : "robinhood@acme.com"
+      }, {
+        "move" : 2,
+        "playerOne" : "ivanhoe@acme.com",
+        "playerTwo" : "robinhood@acme.com",
+        "gameStatus" : "playing",
+        "playerOneScores" : 487,
+        "playerTwoScores" : 321,
+        "turn" : "ivanhoe@acme.com"
+      }, {
+        "move" : 3,
+        "playerOne" : "ivanhoe@acme.com",
+        "playerTwo" : "robinhood@acme.com",
+        "gameStatus" : "playing",
+        "playerOneScores" : 317,
+        "playerTwoScores" : 321,
+        "turn" : "robinhood@acme.com"
+      }, {
+        "move" : 4,
+        "playerOne" : "ivanhoe@acme.com",
+        "playerTwo" : "robinhood@acme.com",
+        "gameStatus" : "playing",
+        "playerOneScores" : 317,
+        "playerTwoScores" : 141,
+        "turn" : "ivanhoe@acme.com"
+      }, {
+        "move" : 5,
+        "playerOne" : "ivanhoe@acme.com",
+        "playerTwo" : "robinhood@acme.com",
+        "gameStatus" : "playing",
+        "playerOneScores" : 147,
+        "playerTwoScores" : 141,
+        "turn" : "robinhood@acme.com"
+      }, {
+        "move" : 6,
+        "playerOne" : "ivanhoe@acme.com",
+        "playerTwo" : "robinhood@acme.com",
+        "gameStatus" : "playing",
+        "playerOneScores" : 147,
+        "playerTwoScores" : 141,
+        "turn" : "ivanhoe@acme.com"
+      }, {
+        "move" : 7,
+        "playerOne" : "ivanhoe@acme.com",
+        "playerTwo" : "robinhood@acme.com",
+        "gameStatus" : "playing",
+        "playerOneScores" : 20,
+        "playerTwoScores" : 141,
+        "turn" : "robinhood@acme.com"
+      }, {
+        "move" : 8,
+        "playerOne" : "ivanhoe@acme.com",
+        "playerTwo" : "robinhood@acme.com",
+        "gameStatus" : "playing",
+        "playerOneScores" : 20,
+        "playerTwoScores" : 141,
+        "turn" : "ivanhoe@acme.com"
+      }, {
+        "move" : 9,
+        "playerOne" : "ivanhoe@acme.com",
+        "playerTwo" : "robinhood@acme.com",
+        "gameStatus" : "ivanhoe@acme.com wins!",
+        "playerOneScores" : 0,
+        "playerTwoScores" : 141,
+        "turn" : "ivanhoe@acme.com"
+      } ]""";
+
+  private final String historyAnswer2 = """
+      [ {
+        "move" : 0,
+        "playerOne" : "ivanhoe@acme.com",
+        "playerTwo" : "robinhood@acme.com",
+        "gameStatus" : "started",
+        "playerOneScores" : 501,
+        "playerTwoScores" : 501,
+        "turn" : "ivanhoe@acme.com"
+      }, {
+        "move" : 1,
+        "playerOne" : "ivanhoe@acme.com",
+        "playerTwo" : "robinhood@acme.com",
+        "gameStatus" : "playing",
+        "playerOneScores" : 487,
+        "playerTwoScores" : 501,
+        "turn" : "robinhood@acme.com"
+      }, {
+        "move" : 2,
+        "playerOne" : "ivanhoe@acme.com",
+        "playerTwo" : "robinhood@acme.com",
+        "gameStatus" : "playing",
+        "playerOneScores" : 487,
+        "playerTwoScores" : 321,
+        "turn" : "ivanhoe@acme.com"
+      } ]""";
+
+  private final String historyAnswer3 = """
+      [ {
+        "move" : 0,
+        "playerOne" : "ivanhoe@acme.com",
+        "playerTwo" : "robinhood@acme.com",
+        "gameStatus" : "started",
+        "playerOneScores" : 501,
+        "playerTwoScores" : 501,
+        "turn" : "ivanhoe@acme.com"
+      }, {
+        "move" : 1,
+        "playerOne" : "ivanhoe@acme.com",
+        "playerTwo" : "robinhood@acme.com",
+        "gameStatus" : "playing",
+        "playerOneScores" : 487,
+        "playerTwoScores" : 501,
+        "turn" : "robinhood@acme.com"
+      }, {
+        "move" : 2,
+        "playerOne" : "ivanhoe@acme.com",
+        "playerTwo" : "robinhood@acme.com",
+        "gameStatus" : "playing",
+        "playerOneScores" : 487,
+        "playerTwoScores" : 321,
+        "turn" : "ivanhoe@acme.com"
+      } ]
+      """;
+
+  private final String historyAnswer4 = """
+      [ {
+        "move" : 0,
+        "playerOne" : "ivanhoe@acme.com",
+        "playerTwo" : "robinhood@acme.com",
+        "gameStatus" : "started",
+        "playerOneScores" : 501,
+        "playerTwoScores" : 501,
+        "turn" : "ivanhoe@acme.com"
+      }, {
+        "move" : 1,
+        "playerOne" : "ivanhoe@acme.com",
+        "playerTwo" : "robinhood@acme.com",
+        "gameStatus" : "playing",
+        "playerOneScores" : 487,
+        "playerTwoScores" : 501,
+        "turn" : "robinhood@acme.com"
+      } ]""";
+
+
+  private final String cancelAnswer1 = """
+      {
+         "result": "The game is already over!"
+      }""";
+
+  private final String cancelAnswer2 = """
+      {
+        "playerOne" : "wilhelmtell@acme.com",
+        "playerTwo" : "",
+        "gameStatus" : "Nobody wins!",
+        "playerOneScores" : 101,
+        "playerTwoScores" : 101,
+        "turn" : "wilhelmtell@acme.com"
+      }""";
+
+  private final String cancelAnswer3 = """
+      {
+         "result": "Game not found!"
+      }""";
+
+  private final String cancelAnswer4 = """
+      {
+         "result": "Wrong status!"
+      }""";
+
+  private final String revertAnswer1 = """
+      {
+        "playerOne" : "ivanhoe@acme.com",
+        "playerTwo" : "robinhood@acme.com",
+        "gameStatus" : "playing",
+        "playerOneScores" : 487,
+        "playerTwoScores" : 501,
+        "turn" : "robinhood@acme.com"
+      }""";
+
+  private final String revertNotFound = """
+      {
+         "result": "Move not found!"
+      }""";
+
+  private final String revertLast = """
+      {
+         "result": "There is nothing to revert!"
+      }""";
+
+  private final String revertOver = """
+      {
+         "result": "The game is over!"
+      }""";
+
 
 
   public DartsGameTest() {
@@ -542,13 +803,12 @@ public class DartsGameTest extends SpringTest {
    */
   private HttpResponse checkResponseStatus(String token, String body,
                                            int status, String api, String method) {
-    get(api);
     HttpRequest request = switch (method) {
       case "GET" -> get(api);
       case "POST" -> post(api, body);
       case "PUT" -> put(api, body);
       case "DELETE" -> delete(api);
-      default -> get(api);
+      default -> null;
     };
 
     if (!token.equals("")) {
@@ -566,12 +826,12 @@ public class DartsGameTest extends SpringTest {
     return response;
   }
 
-  private CheckResult testApi(String api, String method,
-                              String token, String answer, TestHint hint) {
+  private CheckResult testApi(String api, String body, String method,
+                              int status, String token, String answer, TestHint hint) {
 
     System.out.println(hint.toString());
 
-    HttpResponse response = checkResponseStatus(token, "", 403, api, method);
+    HttpResponse response = checkResponseStatus(token, body, status, api, method);
 
     // Check JSON in response
     if (response.getStatusCode() == 200) {
@@ -620,7 +880,7 @@ public class DartsGameTest extends SpringTest {
     return CheckResult.correct();
   }
 
-  private CheckResult checkToken(String user, String[] scope, TestHint hint) {
+  private CheckResult checkToken(String user, String[] scope, String role, TestHint hint) {
 
     System.out.println(hint.toString());
 
@@ -650,7 +910,7 @@ public class DartsGameTest extends SpringTest {
                     .value("user_name", login)
                     .value("scope", scope)
                     .value("exp", isInteger())
-                    .value("authorities", new String[] {"ROLE_GAMER"})
+                    .value("authorities", new String[] {role})
                     .anyOtherValues());
 
     return CheckResult.correct();
@@ -733,13 +993,6 @@ public class DartsGameTest extends SpringTest {
                       .value("playerTwoScores", answerJson.get("playerTwoScores").getAsInt())
                       .value("turn", answerJson.get("turn").getAsString()));
 
-    } else if (response.getStatusCode() == 404) {
-      if (!response.getJson().isJsonObject()) {
-        return CheckResult.wrong("Wrong object in response, expected JSON.");
-      }
-      if (response.getJson().getAsJsonObject().size() != 0) {
-        return CheckResult.wrong("Expected empty JSON.");
-      }
     } else {
       expect(response.getContent()).asJson().check(
               isObject());
@@ -838,6 +1091,111 @@ public class DartsGameTest extends SpringTest {
     return CheckResult.correct();
   }
 
+  private CheckResult testCancelApi(Integer gameId, String body, int status, String token, String answer,
+                                    TestHint hint) {
+
+    System.out.println(hint.toString());
+
+    JsonObject jsonBody = new JsonObject();
+    jsonBody.addProperty("gameId", gameId);
+    jsonBody.addProperty("status", body);
+
+    HttpResponse response = checkResponseStatus(token, jsonBody.toString(), status, "/api/game/cancel", "PUT");
+
+    JsonObject answerJson = getJson(answer).getAsJsonObject();
+
+    // Check JSON in response
+    if (response.getStatusCode() == 200) {
+      expect(response.getContent()).asJson().check(
+              isObject()
+                      .value("gameId", isInteger())
+                      .value("playerOne", answerJson.get("playerOne").getAsString())
+                      .value("playerTwo", answerJson.get("playerTwo").getAsString())
+                      .value("gameStatus", answerJson.get("gameStatus").getAsString())
+                      .value("playerOneScores", answerJson.get("playerOneScores").getAsInt())
+                      .value("playerTwoScores", answerJson.get("playerTwoScores").getAsInt())
+                      .value("turn", answerJson.get("turn").getAsString()));
+
+    } else {
+      expect(response.getContent()).asJson().check(
+              isObject()
+                      .value("result", answerJson.get("result").getAsString()));
+    }
+    return CheckResult.correct();
+  }
+
+  private CheckResult testRevertApi(Integer gameId, Integer body, int status, String token, String answer,
+                                    TestHint hint) {
+
+    System.out.println(hint.toString());
+
+    JsonObject jsonBody = new JsonObject();
+    jsonBody.addProperty("gameId", gameId);
+    jsonBody.addProperty("move", body);
+
+    HttpResponse response = checkResponseStatus(token, jsonBody.toString(), status, "/api/game/revert", "PUT");
+
+    JsonObject answerJson = getJson(answer).getAsJsonObject();
+
+    // Check JSON in response
+    if (response.getStatusCode() == 200) {
+      expect(response.getContent()).asJson().check(
+              isObject()
+                      .value("gameId", isInteger())
+                      .value("playerOne", answerJson.get("playerOne").getAsString())
+                      .value("playerTwo", answerJson.get("playerTwo").getAsString())
+                      .value("gameStatus", answerJson.get("gameStatus").getAsString())
+                      .value("playerOneScores", answerJson.get("playerOneScores").getAsInt())
+                      .value("playerTwoScores", answerJson.get("playerTwoScores").getAsInt())
+                      .value("turn", answerJson.get("turn").getAsString()));
+
+    } else {
+      expect(response.getContent()).asJson().check(
+              isObject()
+                      .value("result", answerJson.get("result").getAsString()));
+    }
+    return CheckResult.correct();
+  }
+
+  private CheckResult testHistoryApi(String api, int status, String token, String answer,
+                                     TestHint hint) {
+
+    System.out.println(hint.toString());
+    HttpResponse response = checkResponseStatus(token, "", status, api, "GET");
+
+    // Check JSON in response
+    if (response.getStatusCode() == 200) {
+      JsonArray responseJson;
+      try {
+        responseJson = getJson(response.getContent()).getAsJsonArray();
+      } catch (Exception e) {
+        throw new WrongAnswer("Must be array of JSON's in answer");
+      }
+      JsonArray correctJson = getJson(answer).getAsJsonArray();
+      if (responseJson.size() != correctJson.size()) {
+        throw new WrongAnswer("Wrong size of array in response");
+      }
+      for (int i = 0; i < responseJson.size(); i++) {
+        expect(responseJson.get(i).getAsJsonObject().toString()).asJson()
+                .check(isObject()
+                        .value("gameId", isInteger())
+                        .value("move", isInteger())
+                        .value("playerOne", correctJson.get(i).getAsJsonObject().get("playerOne").getAsString())
+                        .value("playerTwo", correctJson.get(i).getAsJsonObject().get("playerTwo").getAsString())
+                        .value("gameStatus", correctJson.get(i).getAsJsonObject().get("gameStatus").getAsString())
+                        .value("playerOneScores", correctJson.get(i).getAsJsonObject().get("playerOneScores").getAsInt())
+                        .value("playerTwoScores", correctJson.get(i).getAsJsonObject().get("playerTwoScores").getAsInt())
+                        .value("turn", correctJson.get(i).getAsJsonObject().get("turn").getAsString()));
+      }
+    }  else {
+      JsonObject answerJson = getJson(answer).getAsJsonObject();
+      expect(response.getContent()).asJson().check(
+              isObject()
+                      .value("result", answerJson.get("result").getAsString()));
+    }
+    return CheckResult.correct();
+  }
+
 
   @DynamicTest
   DynamicTesting[] dt = new DynamicTesting[]{
@@ -851,49 +1209,70 @@ public class DartsGameTest extends SpringTest {
           () -> testTokenApi(wrongUser, clientId, clientSecret, HttpStatus.BAD_REQUEST.value(),
                   new TestHint(tokenApi, "",
                           "Testing token endpoint with correct client credentials, but wrong user")), // 3
+          //
           () -> getToken(ivanHoe, "update", HttpStatus.OK.value(), new TestHint(tokenApi, "",
                   "Testing token endpoint with correct credentials and correct user and scope 'update'")), // 4
-          () -> checkToken(ivanHoe, new String[] {"update"}, new TestHint(tokenApi, "",
+          () -> checkToken(ivanHoe, new String[] {"update"}, "ROLE_GAMER", new TestHint(tokenApi, "",
                   "Checking token 'scope' value, it must be - 'update'")), // 5
-          () -> testApi(apiCreate, "POST", bearerToken, "ivanhoe@acme.com",
+          () -> testApi(apiCreate, "", "POST", 403, bearerToken, "ivanhoe@acme.com",
                   new TestHint(apiCreate, "", "The token with the wrong scope (update)" +
                           " should not be able to access api")), // 6
+          //
           () -> getToken(ivanHoe, "write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
                   "Testing token endpoint with correct credentials and correct user and scope 'write'")), // 7
-          () -> checkToken(ivanHoe, new String[] {"write"}, new TestHint(tokenApi, "",
+          () -> checkToken(ivanHoe, new String[] {"write"}, "ROLE_GAMER", new TestHint(tokenApi, "",
                   "Checking token 'scope' value, it must be - 'write'")), // 8
-          () -> testApi(apiList, "GET", bearerToken, "ivanhoe@acme.com",
+          () -> testApi(apiList, "", "GET", 403, bearerToken, "ivanhoe@acme.com",
                   new TestHint(apiList, "", "The token with the wrong scope (write)" +
                           " should not be able to access api with method GET")), // 9
+          //
           () -> getToken(ivanHoe, "read", HttpStatus.OK.value(), new TestHint(tokenApi, "",
                   "Testing token endpoint with correct credentials and correct user and scope 'read'")), // 10
-          () -> checkToken(ivanHoe, new String[] {"read"}, new TestHint(tokenApi, "",
+          () -> checkToken(ivanHoe, new String[] {"read"}, "ROLE_GAMER", new TestHint(tokenApi, "",
                   "Checking token 'scope' value, it must be - 'read'")), // 11
-          () -> testApi(apiCreate, "POST", bearerToken, "ivanhoe@acme.com",
+          () -> testApi(apiCreate, "", "POST", 403, bearerToken, "ivanhoe@acme.com",
                   new TestHint(apiCreate, "", "The token with the wrong scope (read)" +
                           " should not be able to access api with method POST")), // 12
+          //
+          () -> getToken(referee, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 13
+          () -> checkToken(referee, new String[] {"read", "write"}, "ROLE_REFEREE", new TestHint(tokenApi, "",
+                  "Checking token 'scope' value, it must be - 'read write'")), // 14
+          () -> testApi(cancelApi, "", "PUT", 403, bearerToken, "judgedredd@acme.com",
+                  new TestHint(cancelApi, "", "The token with the wrong scope (read write)" +
+                          " should not be able to access api with method PUT")), // 15
+          //
+          () -> getToken(ivanHoe, "update", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'update'")), // 16
+          () -> checkToken(ivanHoe, new String[] {"update"}, "ROLE_GAMER", new TestHint(tokenApi, "",
+                  "Checking token 'scope' value, it must be - 'update'")), // 17
+          () -> testApi(cancelApi, "", "PUT", 403, bearerToken, "ivanhoe@acme.com",
+                  new TestHint(cancelApi, "", "The token with the wrong role (ROLE_GAMER)" +
+                          " should not be able to access api with method PUT")), // 18
 
           // Tests for status API
+          () -> getToken(ivanHoe, "read", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read'")), // 19
           () -> testStatusApi(404, bearerToken, emptyAnswer,
                   new TestHint(apiStatus, "",
                           "If the user does not participate in the game, then the endpoint must respond" +
-                                  " with HTTP NOT FOUND status 404")), // 13
+                                  " with HTTP NOT FOUND status 404")), // 20
 
           // Tests for join API
           () -> testJoinApi(404, bearerToken, gameNotFound, 1001,
                   new TestHint(apiJoin + "/" + 1001, "",
                           "If a game with a specified id is not found, the endpoint must respond" +
-                                  " with HTTP NOT FOUND status 404")), // 14
+                                  " with HTTP NOT FOUND status 404")), // 21
 
           // Tests for list API
-          () -> testListApi(404, bearerToken, emptyArray), // 15
+          () -> testListApi(404, bearerToken, emptyArray), // 22
 
 
           // Tests for create API
           () -> getToken(ivanHoe, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
                   "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 16
           //
-          () -> checkToken(ivanHoe, new String[] {"read", "write"}, new TestHint(tokenApi, "",
+          () -> checkToken(ivanHoe, new String[] {"read", "write"}, "ROLE_GAMER", new TestHint(tokenApi, "",
                   "Checking token 'scope' value, it must be - 'read write'")), // 17
           //
           () -> testCreateApi(wrongScore, 400, bearerToken, wrongScoreAnswer,
@@ -904,7 +1283,7 @@ public class DartsGameTest extends SpringTest {
           () -> getToken(ivanHoe, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
                   "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 19
           //
-          () -> checkToken(ivanHoe, new String[] {"read", "write"}, new TestHint(tokenApi, "",
+          () -> checkToken(ivanHoe, new String[] {"read", "write"}, "ROLE_GAMER", new TestHint(tokenApi, "",
                   "Checking token 'scope' value, it must be - 'read write'")), // 20
           //
           () -> testCreateApi(correctScore, 200, bearerToken, answerRH,
@@ -914,7 +1293,7 @@ public class DartsGameTest extends SpringTest {
           () -> getToken(wilhelmTell, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
                   "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 22
           //
-          () -> checkToken(wilhelmTell, new String[] {"read", "write"}, new TestHint(tokenApi, "",
+          () -> checkToken(wilhelmTell, new String[] {"read", "write"}, "ROLE_GAMER", new TestHint(tokenApi, "",
                   "Checking token 'scope' value, it must be - 'read write'")), // 23
           //
           () -> testCreateApi(correctScore101, 200, bearerToken, answerWT,
@@ -924,7 +1303,7 @@ public class DartsGameTest extends SpringTest {
           () -> getToken(ivanHoe, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
                   "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 25
           //
-          () -> checkToken(ivanHoe, new String[] {"read", "write"}, new TestHint(tokenApi, "",
+          () -> checkToken(ivanHoe, new String[] {"read", "write"}, "ROLE_GAMER", new TestHint(tokenApi, "",
                   "Checking token 'scope' value, it must be - 'read write'")), // 26
           //
           () -> testCreateApi(correctScore, 400, bearerToken, gameExistAnswer,
@@ -1157,6 +1536,144 @@ public class DartsGameTest extends SpringTest {
                           "Endpoint must return information about the last game played.")), // 77
 
 
+          // Tests for history API
+          () -> testHistoryApi(historyApi + gameIds.get(0), 200, bearerToken,
+                  historyAnswer1, new TestHint(historyApi, "",
+                          "If game with specified gameid is found and status of game is not a \"created\"" +
+                                  " endpoint must respond with HTTP OK status 200")), // 78
+          //
+          () -> testHistoryApi(historyApi + "unknown", 400, bearerToken,
+                  historyBad, new TestHint(historyApi + "unknown", "",
+                          "If gameId is not a number" +
+                                  " endpoint must respond with HTTP BAD REQUEST status 400")), // 78
+          //
+          () -> testHistoryApi(historyApi + -1, 400, bearerToken,
+                  historyBad, new TestHint(historyApi + -1, "",
+                          "If game with gameId < 0" +
+                                  " endpoint must respond with HTTP BAD REQUEST status 400")), // 78
+          //
+
+          // Tests for cancelling
+          () -> getToken(referee, "read update", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Request token for referee")), // 79
+          //
+          () -> checkToken(referee, new String[] {"read", "update"}, "ROLE_REFEREE", new TestHint(tokenApi, "",
+                  "Checking token 'scope' value, it must be - 'read update'")), // 80
+          //
+          () -> testCancelApi(gameIds.get(0), "Nobody wins!", 400, bearerToken,
+                  cancelAnswer1, new TestHint(cancelApi, "",
+                          "If game with specified gameid is found and status of game is \"somebody wins!\"" +
+                                  " endpoint must respond with HTTP BAD REQUEST status 400")), // 81
+
+          () -> getToken(wilhelmTell, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 82
+          //
+          () -> testCreateApi(correctScore101, 200, bearerToken, answerWT,
+                  new TestHint(apiCreate, correctScore101,
+                          "All conditions are met and the game must be created")), // 83
+          //
+          () -> getToken(referee, "read update", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Request token for referee")), // 84
+          //
+          () -> testCancelApi(gameIds.get(gameIds.size() - 1), "Somebody wins!", 400, bearerToken,
+                  cancelAnswer4, new TestHint(cancelApi, "",
+                          "If the player specified in the status field is not a participant of the game" +
+                                  " endpoint must respond with HTTP BAD REQUEST status 400 and change game status")), // 85
+          //
+          () -> testCancelApi(gameIds.get(gameIds.size() - 1), "Nobody wins!", 200, bearerToken,
+                  cancelAnswer2, new TestHint(cancelApi, "",
+                          "If game with specified gameid is found and status of game is not \"somebody wins!\"" +
+                                  " endpoint must respond with HTTP OK status 200 and change game status")), // 85
+          //
+
+          // Test reverting games
+          () -> testRevertApi(gameIds.get(0), 22, 400, bearerToken,
+                  revertNotFound, new TestHint(revertApi, "",
+                          "If game with specified gameId is found and move is not exist" +
+                                  " endpoint must respond with HTTP BAD REQUEST status 400 and game state not must be changed")), // 87
+          () -> testRevertApi(gameIds.get(0), 9, 400, bearerToken,
+                  revertLast, new TestHint(revertApi, "",
+                          "If game with specified gameId is found and move is not exist" +
+                                  " endpoint must respond with HTTP OK status 400 and game state must not be changed")), // 87
+          () -> testHistoryApi(historyApi + gameIds.get(0), 200, bearerToken,
+                  historyAnswer1, new TestHint(historyApi, "",
+                          "Game state must not be changed after wrong requests")), // 78
+          () -> testRevertApi(gameIds.get(0), 2, 400, bearerToken,
+                  revertOver, new TestHint(revertApi, "",
+                          "If game with specified gameid is found and game is over" +
+                                  " endpoint must respond with HTTP BAD REQUEST status 400 and game state must not be changed")), // 87
+          //
+          () -> testHistoryApi(historyApi + gameIds.get(0), 200, bearerToken,
+                  historyAnswer1, new TestHint(historyApi, "",
+                          "Game history after revert must not be changed" +
+                                  " endpoint must respond with HTTP OK status 200")), // 88
+          //
+
+          // Let's play and revert
+          () -> getToken(ivanHoe, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 16
+          //
+          () -> testCreateApi(correctScore, 200, bearerToken, answerRH,
+                  new TestHint(apiCreate, correctScore,
+                          "All conditions are met and the game must be created")), // 21
+          //
+          () -> getToken(robinHood, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 61
+          //
+          () -> testJoinApi(200, bearerToken, joinAnswerRH1, gameIds.get(gameIds.size() - 1),
+                  new TestHint(apiJoin + "/" + gameIds.get(gameIds.size() - 1), "",
+                          "Endpoint must respond with HTTP OK status 200 and JSON about game" +
+                                  " if user can join a game with specified id" +
+                                  " (game status is created and the user does not participate in other games):")), //
+          //
+          () -> getToken(ivanHoe, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 16
+          //
+          () -> testThrowsApi(correctThrows1, 200, bearerToken, statusAnswer7,
+                  new TestHint(apiThrows, correctThrows1,
+                          "If user makes correct throws scores and turn must changed," +
+                                  " endpoint must respond with HTTP OK status 200")), // 73
+          () -> getToken(robinHood, "read write", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Testing token endpoint with correct credentials and correct user and scope 'read write'")), // 75
+          () -> testThrowsApi(correctThrows2, 200, bearerToken, statusAnswer8,
+                  new TestHint(apiThrows, correctThrows2,
+                          "If user makes correct throws scores and turn must changed," +
+                                  " endpoint must respond with HTTP OK status 200")), // 73
+          () -> testHistoryApi(historyApi + gameIds.get(gameIds.size() - 1), 200, bearerToken,
+                  historyAnswer3, new TestHint(historyApi, "",
+                          "Game history must changes after throws," +
+                                  " endpoint must respond with HTTP OK status 200")), // 88
+          () -> getToken(referee, "read update", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Request token for referee")), // 84
+          () -> testRevertApi(gameIds.get(gameIds.size() - 1), 1, 200, bearerToken,
+                  revertAnswer1, new TestHint(revertApi, "",
+                          "If game with specified gameId is found and move is exist" +
+                                  " endpoint must respond with HTTP OK status 200 and game state must be changed")), // 87
+          () -> testHistoryApi(historyApi + gameIds.get(gameIds.size() - 1), 200, bearerToken,
+                  historyAnswer4, new TestHint(historyApi, "",
+                          "Game history must changes after revert to move - 1," +
+                                  " endpoint must respond with HTTP OK status 200")), // 88
+
+          // Tests for cancel API, not found
+          () -> getToken(referee, "read update", HttpStatus.OK.value(), new TestHint(tokenApi, "",
+                  "Request token for referee")), // 23
+
+          () -> testCancelApi(1001, "Nobody wins!", 404, bearerToken,
+                  cancelAnswer3, new TestHint(cancelApi, "",
+                          "If game with specified gameid is not found" +
+                                  " endpoint must respond with HTTP NOT FOUND status 404")), // 24
+
+          // Tests for history API, not found
+          () -> testHistoryApi(historyApi + 1001, 404, bearerToken,
+                  historyNotFound, new TestHint(historyApi, "",
+                          "If game with specified gameId is not found" +
+                                  " endpoint must respond with HTTP NOT FOUND status 404")), // 25
+
+          // Tests for revert API, not found
+          () -> testRevertApi(1001, 2, 404, bearerToken,
+                  historyNotFound, new TestHint(revertApi, "",
+                          "If game with specified gameId is not found" +
+                                  " endpoint must respond with HTTP OK status 404")), // 26
 
 
 

@@ -10,15 +10,21 @@ import lombok.NoArgsConstructor;
 public class ResultDTO {
     private String result;
 
-    public static class UnderConstruction extends ResultDTO {
-        public UnderConstruction() {
-            super("Under construction!");
-        }
-    }
-
     public static class HasUnfinishedGames extends ResultDTO {
         public HasUnfinishedGames() {
             super("You have an unfinished game!");
+        }
+    }
+
+    public static class GameNotFound extends ResultDTO {
+        public GameNotFound() {
+            super("Game not found!");
+        }
+    }
+
+    public static class WrongRequest extends ResultDTO {
+        public WrongRequest() {
+            super("Wrong request!");
         }
     }
 }
