@@ -27,7 +27,15 @@ public class RepositoryService {
         );
     }
 
-    public GameEntity create(GameEntity newGame) {
+    public GameEntity create(String authenticatedUser, int score) {
+        GameEntity newGame = GameEntity.builder()
+                .gameStatus(GameStatus.CREATED)
+                .playerOne(authenticatedUser)
+                .playerTwo("")
+                .playerOneScores(score)
+                .playerTwoScores(score)
+                .turn(authenticatedUser)
+                .build();
         return gameRepository.save(newGame);
     }
 
