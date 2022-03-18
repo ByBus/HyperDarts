@@ -1,5 +1,6 @@
 package dartsgame.persistense;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
@@ -15,13 +16,10 @@ interface GameRepository extends CrudRepository<GameEntity, Long> {
 
     List<GameEntity> findAllByOrderByIdDesc();
 
-    GameEntity findByPlayerOneAndGameStatusInOrPlayerTwoAndGameStatusIn(String playerOne,
-                                                                        List<GameStatus> statuses1,
-                                                                        String playerTwo,
-                                                                        List<GameStatus> statuses2);
+    GameEntity findFirstByPlayerOneAndGameStatusInOrPlayerTwoAndGameStatusIn(String playerOne,
+                                                                             List<GameStatus> statuses1,
+                                                                             String playerTwo,
+                                                                             List<GameStatus> statuses2,
+                                                                             Sort sort);
 
-    GameEntity findFirstByPlayerOneAndGameStatusInOrPlayerTwoAndGameStatusInOrderByIdDesc(String playerOne,
-                                                                                          List<GameStatus> statuses1,
-                                                                                          String playerTwo,
-                                                                                          List<GameStatus> statuses2);
 }

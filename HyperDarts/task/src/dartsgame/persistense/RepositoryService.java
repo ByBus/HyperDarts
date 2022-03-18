@@ -1,6 +1,7 @@
 package dartsgame.persistense;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -8,6 +9,10 @@ import java.util.List;
 
 @Service
 public class RepositoryService {
+    private enum SortDirection {
+        ASC,
+        DESC
+    }
     private final GameRepository gameRepository;
     private final GameMoveRepository moveRepository;
 
@@ -53,21 +58,23 @@ public class RepositoryService {
 
     public GameEntity getCurrentGame(String currentUser) {
         List<GameStatus> statuses = List.of(GameStatus.STARTED, GameStatus.PLAYING);
-        return gameRepository.findByPlayerOneAndGameStatusInOrPlayerTwoAndGameStatusIn(
+        return gameRepository.findFirstByPlayerOneAndGameStatusInOrPlayerTwoAndGameStatusIn(
                 currentUser,
                 statuses,
                 currentUser,
-                statuses
+                statuses,
+                getSort(SortDirection.ASC)
         );
     }
 
     public GameEntity getLastGame(String currentUser) {
         List<GameStatus> statuses = List.of(GameStatus.USER_WINS, GameStatus.NOBODY_WINS);
-        return gameRepository.findFirstByPlayerOneAndGameStatusInOrPlayerTwoAndGameStatusInOrderByIdDesc(
+        return gameRepository.findFirstByPlayerOneAndGameStatusInOrPlayerTwoAndGameStatusIn(
                 currentUser,
                 statuses,
                 currentUser,
-                statuses
+                statuses,
+                getSort(SortDirection.DESC)
         );
     }
 
@@ -98,4 +105,16 @@ public class RepositoryService {
     public void deleteMovesAfter(GameMoveEntity move) {
         moveRepository.deleteAllByGameIdAndMoveGreaterThan(move.getGameId(), move.getMove());
     }
+
+    private static Sort getSort(SortDirection direction) {
+        switch (direction) {
+            case ASC:
+                return Sort.by(Sort.Direction.ASC, "id");
+            case DESC:
+                return Sort.by(Sort.Direction.DESC, "id");
+            default:
+                return null;
+        }
+    }
+
 }
